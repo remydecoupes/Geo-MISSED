@@ -2,6 +2,14 @@
 
 The aim of this work is to map geographic bias normalized by GDP indicator 
 
+From now, those models have been studied:
+
+- Codestral-22B
+- Llama3.1-8b
+- Qwen2.5-7b
+
+See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
+
 ## Data
 
 | Title | link | metadata | name file |

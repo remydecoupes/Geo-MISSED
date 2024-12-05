@@ -51,7 +51,7 @@ folium.Choropleth(
     # columns=['NUTS_ID', 'diff_eurostat_llm'], 
     columns=['NUTS_ID', 'diff_eurostat_llm_normalized'], 
     key_on='feature.properties.NUTS_ID',  
-    fill_color='RdBu',  
+    fill_color='RdYlGn_r', 
     fill_opacity=0.7,
     line_opacity=0.2,
     legend_name=f'Difference between eurostat {year} and {model_short_name}'
@@ -79,6 +79,9 @@ hover = folium.features.GeoJson(
 )
 m.add_child(hover)
 m.keep_in_front(m)
+
+#colormap = LinearColormap(['green', 'yellow', 'red'], vmin=-1000, vmax=1000).to_step(5)
+# colormap.add_to(m)
 
 
 m.save(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
