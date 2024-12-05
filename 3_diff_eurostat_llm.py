@@ -36,7 +36,7 @@ gdf = gdf.to_crs(epsg=4326)
 gdf = gdf[gdf["LEVL_CODE"] == NUTS_Level]
 gdf['2017_predicted'] = gdf['2017_predicted'].round(0)
 gdf['diff_eurostat_llm'] = ((gdf['2017_predicted'] - gdf['2017'])).round(0)
-gdf.loc[gdf['diff_eurostat_llm'] > 100000, 'diff_eurostat_llm'] = np.nan
+gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
 gdf['diff_eurostat_llm_normalized'] = gdf['diff_eurostat_llm'] / gdf['2017']
 
 
