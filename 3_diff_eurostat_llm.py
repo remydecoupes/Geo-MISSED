@@ -51,7 +51,7 @@ gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
 # std_diff = gdf['diff_eurostat_llm'].std()
 # gdf['diff_eurostat_llm_normalized'] = abs((gdf['diff_eurostat_llm'] - mean_diff) / std_diff).round(3)
 # MAPE
-gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf['2017'] * 100
+gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf['2017']
 
 gdf[f"{year}_deviation"] = gdf[f"{year}_deviation"].round(0)
 
@@ -103,7 +103,7 @@ m.save(f'./docs/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 for country in country_list:
     gdf_copy = gdf.copy()
     gdf_copy = gdf_copy[gdf_copy["country"] == country]
-    gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy['2017'] * 100
+    gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy['2017']
 
     gdf_copy_json = gdf_copy.to_crs(epsg=4326).to_json()
 
