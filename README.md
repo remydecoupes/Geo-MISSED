@@ -1,14 +1,19 @@
-# Explore LLMs geographic bias for European Country
+# Explore LLMs geographic bias for European Countries
 
-The aim of this work is to map geographic bias normalized by GDP indicator 
+The aim of this work is to map geographic bias normalized by geo indicator.
 
-From now, those models have been studied:
+**LLMs' prediction of average income per inhabitant:**
 
-- Codestral-22B
-- Llama3.1-8b
-- Qwen2.5-7b
+The aim is to predict the annual income for each subregion of European countries (at the NUTS_2 level). The ground truth is based on Eurostat data.
+
+The pipeline is divided into 3 steps:
+
+1. Preprocessing and extracting Eurostat data.
+2. Running LLMs to predict the average income per inhabitant.
+3. Displaying on maps the difference between the predicted income and Eurostat data.
 
 See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
+
 
 ## Data
 
