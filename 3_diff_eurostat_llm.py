@@ -21,6 +21,14 @@ elif args.model == "qwen2.5:7b":
 
 year = 2017
 NUTS_Level = 2
+country_list = ['Austria', 'Albania', 'Belgium', 'Bulgaria', 'Switzerland',
+       'Czechia', 'Cyprus', 'Germany', 'Denmark', 'Unknown', 'Estonia',
+       'Spain', 'France', 'Finland', 'Croatia', 'Hungary', 'Italy',
+       'Ireland', 'Norway', 'Netherlands', 'Montenegro',
+       'North Macedonia', 'Lithuania', 'Malta', 'Luxembourg', 'Latvia',
+       'Romania', 'Poland', 'Portugal', 'Serbia', 'Türkiye', 'Sweden',
+       'Slovakia', 'Slovenia']
+country_list = ['Germany', 'Spain', 'France', 'Italy']
 
 df = pd.read_csv(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.csv')
 
@@ -86,3 +94,45 @@ m.keep_in_front(m)
 
 m.save(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 m.save(f'./docs/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
+
+for country in country_list:
+    gdf_copy = gdf.copy()
+    gdf_copy = gdf_copy[gdf_copy["country"] == country]
+    gdf_copy_json = gdf_copy.to_crs(epsg=4326).to_json()
+
+    m = folium.Map(location=[50, 20], zoom_start=5)
+    folium.Choropleth(
+        geo_data=gdf_copy_json,
+        data=gdf_copy,  
+        # columns=['NUTS_ID', 'diff_eurostat_llm'], 
+        columns=['NUTS_ID', 'diff_eurostat_llm_normalized'], 
+        key_on='feature.properties.NUTS_ID',  
+        fill_color='RdYlGn_r', 
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name=f'Difference between eurostat {year} and {model_short_name}'
+    ).add_to(m)
+
+    style_function = lambda x: {'fillColor': '#ffffff', 
+                                'color':'#000000', 
+                                'fillOpacity': 0.1, 
+                                'weight': 0.1}
+    highlight_function = lambda x: {'fillColor': '#000000', 
+                                    'color':'#000000', 
+                                    'fillOpacity': 0.50, 
+                                    'weight': 0.1}
+
+    hover = folium.features.GeoJson(
+        gdf,
+        style_function=style_function, 
+        control=False,
+        highlight_function=highlight_function, 
+        tooltip=folium.features.GeoJsonTooltip(
+            fields=['NUTS_NAME', str(year), f"{year}_predicted", "diff_eurostat_llm_normalized", f"{year}_deviation"],
+            aliases=["Region: ", "Eurostat GDP: ", "LLM predicted: ", "normalized diff: ", "std deviation for 3 llm prediction: "],
+            style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+        )
+    )
+    m.add_child(hover)
+    m.keep_in_front(m)
+    m.save(f'./docs/gdp_{year}_nuts_{NUTS_Level}_{country}_llm_{model_short_name}.html')
