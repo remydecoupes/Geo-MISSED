@@ -45,7 +45,10 @@ gdf = gdf[gdf["LEVL_CODE"] == NUTS_Level]
 gdf['2017_predicted'] = gdf['2017_predicted'].round(0)
 gdf['diff_eurostat_llm'] = ((gdf['2017_predicted'] - gdf['2017'])).round(0)
 gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
-gdf['diff_eurostat_llm_normalized'] = gdf['diff_eurostat_llm'] / gdf['2017']
+# gdf['diff_eurostat_llm_normalized'] = gdf['diff_eurostat_llm'] / gdf['2017']
+mean_diff = gdf['diff_eurostat_llm'].mean()
+std_diff = gdf['diff_eurostat_llm'].std()
+gdf['diff_eurostat_llm_normalized'] = abs((gdf['diff_eurostat_llm'] - mean_diff) / std_diff).round(0)
 
 
 gdf[f"{year}_deviation"] = gdf[f"{year}_deviation"].round(0)
@@ -98,6 +101,10 @@ m.save(f'./docs/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 for country in country_list:
     gdf_copy = gdf.copy()
     gdf_copy = gdf_copy[gdf_copy["country"] == country]
+    mean_diff = gdf_copy['diff_eurostat_llm'].mean()
+    std_diff = gdf_copy['diff_eurostat_llm'].std()
+    gdf['diff_eurostat_llm_normalized'] = abs((gdf_copy['diff_eurostat_llm'] - mean_diff) / std_diff).round(0)
+
     gdf_copy_json = gdf_copy.to_crs(epsg=4326).to_json()
 
     m = folium.Map(location=[50, 20], zoom_start=5)
