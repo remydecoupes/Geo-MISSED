@@ -20,7 +20,7 @@ elif args.model == "qwen2.5:7b":
     model_short_name = "qwen2.5-7b"
 
 year = 2017
-NUTS_Level = 2
+NUTS_Level = 1
 country_list = ['Austria', 'Albania', 'Belgium', 'Bulgaria', 'Switzerland',
        'Czechia', 'Cyprus', 'Germany', 'Denmark', 'Unknown', 'Estonia',
        'Spain', 'France', 'Finland', 'Croatia', 'Hungary', 'Italy',
@@ -30,7 +30,8 @@ country_list = ['Austria', 'Albania', 'Belgium', 'Bulgaria', 'Switzerland',
        'Slovakia', 'Slovenia']
 country_list = ['Germany', 'Spain', 'France', 'Italy']
 
-df = pd.read_csv(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.csv')
+# df = pd.read_csv(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.csv')
+df = pd.read_csv(f'./output/gdp_{year}_nuts_2_llm_{model_short_name}.csv')
 
 try :
     df['geometry'] = df['geometry'].apply(wkt.loads)
