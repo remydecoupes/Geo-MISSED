@@ -10,7 +10,7 @@ The pipeline is divided into 3 steps:
 
 1. Preprocessing and extracting Eurostat data.
 2. Running LLMs to predict the average income per inhabitant.
-3. Displaying on maps the difference between the predicted income and Eurostat data.
+3. Displaying (**Z-Score** Normalization) on maps the difference between the predicted income and Eurostat data.
 
 See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
 

@@ -48,7 +48,7 @@ gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
 # gdf['diff_eurostat_llm_normalized'] = gdf['diff_eurostat_llm'] / gdf['2017']
 mean_diff = gdf['diff_eurostat_llm'].mean()
 std_diff = gdf['diff_eurostat_llm'].std()
-gdf['diff_eurostat_llm_normalized'] = abs((gdf['diff_eurostat_llm'] - mean_diff) / std_diff).round(0)
+gdf['diff_eurostat_llm_normalized'] = abs((gdf['diff_eurostat_llm'] - mean_diff) / std_diff).round(3)
 
 
 gdf[f"{year}_deviation"] = gdf[f"{year}_deviation"].round(0)
