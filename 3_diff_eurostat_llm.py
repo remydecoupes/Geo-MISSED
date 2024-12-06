@@ -46,10 +46,12 @@ gdf['2017_predicted'] = gdf['2017_predicted'].round(0)
 gdf['diff_eurostat_llm'] = ((gdf['2017_predicted'] - gdf['2017'])).round(0)
 gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
 # gdf['diff_eurostat_llm_normalized'] = gdf['diff_eurostat_llm'] / gdf['2017']
-mean_diff = gdf['diff_eurostat_llm'].mean()
-std_diff = gdf['diff_eurostat_llm'].std()
-gdf['diff_eurostat_llm_normalized'] = abs((gdf['diff_eurostat_llm'] - mean_diff) / std_diff).round(3)
-
+# Z-score:
+# mean_diff = gdf['diff_eurostat_llm'].mean()
+# std_diff = gdf['diff_eurostat_llm'].std()
+# gdf['diff_eurostat_llm_normalized'] = abs((gdf['diff_eurostat_llm'] - mean_diff) / std_diff).round(3)
+# MAPE
+gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf['2017'] * 100
 
 gdf[f"{year}_deviation"] = gdf[f"{year}_deviation"].round(0)
 
@@ -101,9 +103,7 @@ m.save(f'./docs/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 for country in country_list:
     gdf_copy = gdf.copy()
     gdf_copy = gdf_copy[gdf_copy["country"] == country]
-    mean_diff = gdf_copy['diff_eurostat_llm'].mean()
-    std_diff = gdf_copy['diff_eurostat_llm'].std()
-    gdf['diff_eurostat_llm_normalized'] = abs((gdf_copy['diff_eurostat_llm'] - mean_diff) / std_diff).round(0)
+    gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy['2017'] * 100
 
     gdf_copy_json = gdf_copy.to_crs(epsg=4326).to_json()
 
@@ -136,7 +136,7 @@ for country in country_list:
         highlight_function=highlight_function, 
         tooltip=folium.features.GeoJsonTooltip(
             fields=['NUTS_NAME', str(year), f"{year}_predicted", "diff_eurostat_llm_normalized", f"{year}_deviation"],
-            aliases=["Region: ", "Eurostat GDP: ", "LLM predicted: ", "normalized diff: ", "std deviation for 3 llm prediction: "],
+            aliases=["Region: ", "Eurostat GDP: ", "LLM predicted: ", "Mean Absolute Percentage Error: ", "std deviation for 3 llm prediction: "],
             style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
         )
     )
