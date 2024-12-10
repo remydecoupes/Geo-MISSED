@@ -23,16 +23,13 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 
 year = 2017
-NUTS_Level = 2
-
-
 
 def prediction(NUTS_ID, country):
     NUTS_ID = NUTS_ID
     country = country
     prompt = f"What is the average income per inhabitant for {NUTS_ID} in {country} in {year}?"
     messages = [
-        {"role": "system", "content": 'You are a statistician working for the European commission at EUROSTAT. You have to give the average income per inhabitant by NUTS_2 levels for year 2017. Don\'t compute it, just guess the income.Answer only with the average income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "30000".'},
+        {"role": "system", "content": f'You are a statistician working for the European commission at EUROSTAT. You have to give the average income per inhabitant by NUTS 1 or 2 or 3 level for year {year}. Don\'t compute it, just guess the income.Answer only with the average income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "30000".'},
         {"role": "user", "content": prompt}
     ]
     # Tokenize input prompt
@@ -77,7 +74,7 @@ def prediction(NUTS_ID, country):
 def relative_prediction(NUTS_ID, country, country_income):
     prompt = f"What is the difference of income per inhabitant between {country} (income: {country_income}) and {NUTS_ID} ({country}) in {year}?"
     messages = [
-        {"role": "system", "content": f'You are a statistician working for the European commission at EUROSTAT. You have to give the difference of average income per inhabitant between a sub regions at NUTS_2 levels and its country for year {year}. Don\'t compute it, just guess the diffrence of income. Answer only with the difference income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "3000".'},
+        {"role": "system", "content": f'You are a statistician working for the European commission at EUROSTAT. You have to give the difference of average income per inhabitant between a sub regions at NUTS 1 or 2 or 3 level and its country for {year}. Don\'t compute it, just guess the diffrence of income. Answer only with the difference income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "3000".'},
         {"role": "user", "content": prompt}
     ]
     # Tokenize input prompt
@@ -204,6 +201,6 @@ if __name__ == "__main__":
     df[[f"{year}_relative_predicted", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"]] = df.progress_apply(average_relative_prediction, axis=1).apply(pd.Series)
     
     try :
-        df.to_csv(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.csv')
+        df.to_csv(f'./output/gdp_{year}_nuts_llm_{model_short_name}.csv')
     except:
-        df.to_csv(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_error_on_name.csv')
+        df.to_csv(f'./output/gdp_{year}_nuts_llm_error_on_name.csv')
