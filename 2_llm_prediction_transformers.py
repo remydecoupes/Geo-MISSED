@@ -72,9 +72,9 @@ def prediction(NUTS_ID, country):
     return generated_text, average_token_logprobs
 
 def relative_prediction(NUTS_ID, country, country_income):
-    prompt = f"What is the difference of income per inhabitant between {country} (income: {country_income}) and {NUTS_ID} ({country}) in {year}?"
+    prompt = f"What is the difference of income per inhabitant between {NUTS_ID} ({country}) and {country} (country income: {country_income})  in {year}?"
     messages = [
-        {"role": "system", "content": f'You are a statistician working for the European commission at EUROSTAT. You have to give the difference of average income per inhabitant between a sub regions at NUTS 1 or 2 or 3 level and its country for {year}. Don\'t compute it, just guess the diffrence of income. Answer only with the difference income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "3000".'},
+        {"role": "system", "content": f'You are a statistician working for the European commission at EUROSTAT. You have to give the difference of average income per inhabitant between a sub regions at NUTS 1 or 2 or 3 level and its country for {year}. Don\'t compute it, just guess the diffrence of income. Answer only with the difference income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: 3000.'},
         {"role": "user", "content": prompt}
     ]
     # Tokenize input prompt
@@ -166,7 +166,7 @@ def average_relative_prediction(row):
         logprobs.append(logprob)
 
     # Handle potential NaN values in predictions
-    predictions = [int(p) for p in predictions if not pd.isna(p)]
+    predictions = [float(p) for p in predictions if not pd.isna(p)]
     logprobs = [float(p) for p in logprobs if not pd.isna(p)]
     print(f'{row["NUTS_NAME"]}/{row["country"]}: {predictions} | {logprobs}')
 
@@ -196,6 +196,8 @@ if __name__ == "__main__":
 
     df = pd.read_csv(f"./output/gdp_{year}.csv")
     df["country"] = df["CNTR_CODE"].apply(lambda code: pycountry.countries.get(alpha_2=code).name if pycountry.countries.get(alpha_2=code) else "Unknown")
+
+    # df = df.iloc[0:3]
 
     df[[f"{year}_predicted", f"{year}_deviation", f"{year}_logprobs", f"{year}_logprobs_deviation"]] = df.progress_apply(average_prediction, axis=1).apply(pd.Series)
     df[[f"{year}_relative_predicted", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"]] = df.progress_apply(average_relative_prediction, axis=1).apply(pd.Series)
