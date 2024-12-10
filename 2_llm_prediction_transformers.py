@@ -74,10 +74,10 @@ def prediction(NUTS_ID, country):
     #return generated_text, generated_token_ids, average_token_logprobs
     return generated_text, average_token_logprobs
 
-def relative_prediction(NUTS_ID, country, capital, capital_income):
-    prompt = f"What is the difference of income per inhabitant between {capital} (income: {capital_income}) and {NUTS_ID} ({country}) in {year}?"
+def relative_prediction(NUTS_ID, country, country_income):
+    prompt = f"What is the difference of income per inhabitant between {country} (income: {country_income}) and {NUTS_ID} ({country}) in {year}?"
     messages = [
-        {"role": "system", "content": 'You are a statistician working for the European commission at EUROSTAT. You have to give the difference of average income per inhabitant between 2 intra european regions at NUTS_2 levels for year 2017. Don\'t compute it, just guess the diffrence of income. Answer only with the difference income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "3000".'},
+        {"role": "system", "content": f'You are a statistician working for the European commission at EUROSTAT. You have to give the difference of average income per inhabitant between a sub regions at NUTS_2 levels and its country for year {year}. Don\'t compute it, just guess the diffrence of income. Answer only with the difference income (a single number) without any other words or repetition of the question. Don\'t repeat the prompt neither. Example of answer: "3000".'},
         {"role": "user", "content": prompt}
     ]
     # Tokenize input prompt
@@ -156,8 +156,7 @@ def average_prediction(row):
 
 def average_relative_prediction(row):
     """
-    Compute the average and deviation of predictions for a given NUTS_ID and country.
-    Expects the row to contain both 'NUTS_ID' and 'country'.
+.
     """
     number_prediction = 3
     predictions = []
@@ -165,7 +164,7 @@ def average_relative_prediction(row):
 
     for _ in range(number_prediction):
         #relative_prediction(NUTS_ID, country, capital, capital_income):
-        prediction_value, logprob = relative_prediction(row["NUTS_NAME"], row["country"])
+        prediction_value, logprob = relative_prediction(row["NUTS_NAME"], row["country"], row["country_income"],)
         predictions.append(prediction_value)
         logprobs.append(logprob)
 
@@ -198,10 +197,12 @@ if __name__ == "__main__":
     # result = prediction(NUTS_ID, country)
     # print("Final Prediction Result:", result)
 
-    df = pd.read_csv(f"./output/gdp_{year}_nuts_{NUTS_Level}.csv")
+    df = pd.read_csv(f"./output/gdp_{year}.csv")
     df["country"] = df["CNTR_CODE"].apply(lambda code: pycountry.countries.get(alpha_2=code).name if pycountry.countries.get(alpha_2=code) else "Unknown")
 
     df[[f"{year}_predicted", f"{year}_deviation", f"{year}_logprobs", f"{year}_logprobs_deviation"]] = df.progress_apply(average_prediction, axis=1).apply(pd.Series)
+    df[[f"{year}_relative_predicted", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"]] = df.progress_apply(average_relative_prediction, axis=1).apply(pd.Series)
+    
     try :
         df.to_csv(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.csv')
     except:
