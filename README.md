@@ -21,6 +21,7 @@ See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
 |---|---|---|---|
 | GDP at current market prices by NUTS 3 regions| [link](https://ec.europa.eu/eurostat/web/main/data/database) | [metadata](https://ec.europa.eu/eurostat/cache/metadata/en/reg_eco10_esms.htm) | [estat_nama_10r_3gdp.tsv](./data/estat_nama_10r_3gdp.tsv) |
 | NUTS3 region| | | [NUTS_RG_01M_2024_3035.geojson](./data/NUTS_RG_01M_2024_3035.geojson)|
+| capitals of all the world | [link](https://ec.europa.eu/eurostat/web/gisco/geodata/administrative-units/countries) | - | CNTR_RG_20M_2024_3035.geojson |
 
 ## Install environment
 
@@ -29,7 +30,9 @@ See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
 ```bash
 conda create -n geobias python=3.10 pip ipython
 conda activate geobias 
-pip install geopandas pandas folium langchain langchain_community langchain_core timeout_decorator langchain_openai matplotlib pycountry
+pip install geopandas pandas folium langchain langchain_community langchain_core timeout_decorator langchain_openai matplotlib pycountry torch transformers 
+pip install 'accelerate>=0.26.0'
+pip install -U bitsandbytes
 ```
 
 **Data**: 
