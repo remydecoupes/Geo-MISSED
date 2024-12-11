@@ -172,7 +172,11 @@ def average_relative_prediction(row):
 
     if predictions:
         average = sum(predictions) / len(predictions)
-        deviation = statistics.stdev(predictions) if len(predictions) > 1 else 0
+        filtered_predictions = [x for x in predictions if not np.isnan(x)]
+        if len(filtered_predictions) > 1:
+            deviation = statistics.stdev(filtered_predictions)
+        else:
+            deviation = np.nan
     else:
         average = np.nan
         deviation = np.nan
@@ -197,7 +201,7 @@ if __name__ == "__main__":
     df = pd.read_csv(f"./output/gdp_{year}.csv")
     df["country"] = df["CNTR_CODE"].apply(lambda code: pycountry.countries.get(alpha_2=code).name if pycountry.countries.get(alpha_2=code) else "Unknown")
 
-    # df = df.iloc[0:3]
+    # df = df.iloc[0:100]
 
     df[[f"{year}_predicted", f"{year}_deviation", f"{year}_logprobs", f"{year}_logprobs_deviation"]] = df.progress_apply(average_prediction, axis=1).apply(pd.Series)
     df[[f"{year}_relative_predicted", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"]] = df.progress_apply(average_relative_prediction, axis=1).apply(pd.Series)
