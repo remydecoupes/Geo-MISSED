@@ -45,8 +45,52 @@
 </head>
 <body>
     <h1>Normalized predicted geo indicator by LLMs</h1>
+    <h2>Transformers backend (for log probabilities)</h2>
+    <h3>NUTS Level 1</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th rowspan="2">Model</th>
+                    <th colspan="2">Europe</th>
+                    <th colspan="2">Germany</th>
+                    <th colspan="2">France</th>
+                    <th colspan="2">Italy</th>
+                    <th colspan="2">Spain</th>
+                </tr>
+                <tr>
+                    <th>Absolute</th>
+                    <th>Relative</th>
+                    <th>Absolute</th>
+                    <th>Relative</th>
+                    <th>Absolute</th>
+                    <th>Relative</th>
+                    <th>Absolute</th>
+                    <th>Relative</th>
+                    <th>Absolute</th>
+                    <th>Relative</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Qwen2.5:7b</td>
+                    <td><a href="./transformers/gdp_2017_nuts_1_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/relative_gdp_2017_nuts_1_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/gdp_2017_nuts_1_Germany_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/relative_gdp_2017_nuts_1_Germany_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/gdp_2017_nuts_1_France_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/relative_gdp_2017_nuts_1_France_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/gdp_2017_nuts_1_Italy_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/relative_gdp_2017_nuts_1_Italy_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/gdp_2017_nuts_1_Spain_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/relative_gdp_2017_nuts_1_Spain_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+
+    <h2>With Ollama backend (without log probs)</h2>
     <!-- NUTS Level 1 Table -->
-    <h2>NUTS Level 1</h2>
+    <h3>NUTS Level 1</h3>
     <table>
         <thead>
             <tr>
@@ -88,7 +132,7 @@
 
 
     <!-- NUTS Level 2 Table -->
-    <h2>NUTS Level 2</h2>
+    <h3>NUTS Level 2</h3>
     <table>
         <thead>
             <tr>
