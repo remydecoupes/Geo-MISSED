@@ -48,19 +48,7 @@
 </head>
 <body>
     <h1>Normalized predicted geo indicator by LLMs</h1>
-    <p><b>Absolute Income prediction</b></p>
-    <p>The absolute predicted average income per habitat for a region (denoted as <span class="math">I_{\text{region/LLM}}</span>) against the ground truth average income per habitat from Eurostat (denoted as <span class="math">I_{\text{region/Eurostat}}</span>).</p>
 
-    <p><b>Relative Income prediction</b></p>
-    <p>The relative predicted relative income (<span class="math">RI_{\text{LLM}}</span>) against the relative difference between the ground truth regional income and the ground truth national income, both obtained from Eurostat.</p>
-
-    <h2>Definitions</h2>
-    <ul>
-        <li><b><span class="math">I_{\text{region/LLM}}</span>:</b> Average income per habitat for a region predicted by the LLM.</li>
-        <li><b><span class="math">I_{\text{region/Eurostat}}</span>:</b> Ground truth average income per habitat for a region from Eurostat.</li>
-        <li><b><span class="math">I_{\text{country/Eurostat}}</span>:</b> Ground truth average income per habitat for a country from Eurostat.</li>
-        <li><b><span class="math">RI_{\text{LLM}}</span>:</b> Relative income predicted by the LLM.</li>
-    </ul>
     <h2>Transformers backend (for log probabilities)</h2>
     <h3>NUTS Level 1</h3>
         <table border="1">
@@ -102,7 +90,19 @@
                 </tr>
             </tbody>
         </table>
-    </body>
+        <p><b>Absolute Income prediction</b></p>
+        <p>The absolute predicted average income per habitat for a region (denoted as \( I_{\text{region/LLM}} \)) against the ground truth average income per habitat from Eurostat (denoted as \( I_{\text{region/Eurostat}} \)).</p>
+    
+        <p><b>Relative Income Prediction</b></p>
+        <p>The relative predicted relative income (\( RI_{\text{LLM}} \)) against the relative difference between the ground truth regional income and the ground truth national income, both obtained from Eurostat.</p>
+        
+        <h2>Definitions</h2>
+        <ul>
+            <li><b>\( I_{\text{region/LLM}} \):</b> Average income per habitat for a region predicted by the LLM.</li>
+            <li><b>\( I_{\text{region/Eurostat}} \):</b> Ground truth average income per habitat for a region from Eurostat.</li>
+            <li><b>\( I_{\text{country/Eurostat}} \):</b> Ground truth average income per habitat for a country from Eurostat.</li>
+            <li><b>\( RI_{\text{LLM}} \):</b> Relative income predicted by the LLM.</li>
+        </ul>
 
     <h2>With Ollama backend (without log probs)</h2>
     <!-- NUTS Level 1 Table -->

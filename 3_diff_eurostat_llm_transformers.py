@@ -5,6 +5,7 @@ from shapely import wkt
 import geopandas as gpd
 import folium
 from branca.colormap import LinearColormap
+import branca.colormap as cm
 import numpy as np
 
 MODEL = "Qwen/Qwen2.5-7B-Instruct"  
@@ -97,17 +98,19 @@ m.save(f'./docs/transformers/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}
 gdf['diff_eurostat_llm_relative'] = (gdf['2017_relative_predicted']).round(0)
 gdf['diff_eurostat_llm_relative_normalized'] = abs(gdf['diff_eurostat_llm_relative']) / gdf[f"{year}"]
 
+
 m = folium.Map(location=[50, 20], zoom_start=5)
 folium.Choropleth(
     geo_data=gdf_json,
     data=gdf,
-    columns=['NUTS_ID', 'diff_eurostat_llm_relative'], 
-    # columns=['NUTS_ID', 'diff_eurostat_llm_relative_normalized'],
+    # columns=['NUTS_ID', 'diff_eurostat_llm_relative'], 
+    columns=['NUTS_ID', 'diff_eurostat_llm_relative_normalized'],
     key_on='feature.properties.NUTS_ID',
     fill_color='RdYlGn_r',
+    # fill_color='viridis',
     fill_opacity=0.7,
     line_opacity=0.2,
-    legend_name=f'Relative income "I" (Iregion - Icountry): Comparison between groundthruth data eurostat {year} and prediction for {model_short_name}'
+    legend_name=f'Normalized relative income "I" (Iregion - Icountry): Comparison between groundthruth data eurostat {year} and prediction for {model_short_name}'
 ).add_to(m)
 
 
@@ -127,7 +130,7 @@ hover = folium.features.GeoJson(
     highlight_function=highlight_function, 
     tooltip=folium.features.GeoJsonTooltip(
         fields=['NUTS_NAME', f"{year}", f"{year}_predicted", "country_income", 'relative_income', f"{year}_relative_predicted", "diff_eurostat_llm_relative_normalized", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"],
-        aliases=["Region: ", f'eurostat Iregion: ', "llm predicted Iregion: ", "Eurostat Icountry: ", "Eurostat Iregion - Icountry: ", "LLM Iregion - Icountry: ", "normalized diff: ", "std deviation for 3 llm prediction: ", "Average logprobs: ", "std deviation for logprobs: "],
+        aliases=["Region: ", f'eurostat Iregion: ', "llm predicted Iregion: ", "Eurostat Icountry: ", "Eurostat Iregion - Icountry: ", "RI_llm: ", "normalized diff: ", "std deviation for 3 llm prediction: ", "Average logprobs: ", "std deviation for logprobs: "],
         style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
     )
 )
