@@ -95,7 +95,7 @@ m.save(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 m.save(f'./docs/transformers/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 
 # relative
-gdf['diff_eurostat_llm_relative'] = (gdf['2017_relative_predicted']).round(0)
+gdf['diff_eurostat_llm_relative'] = (gdf['2017_relative_predicted'] - gdf['relative_income']).round(0)
 gdf['diff_eurostat_llm_relative_normalized'] = abs(gdf['diff_eurostat_llm_relative']) / gdf[f"{year}"]
 
 
@@ -214,8 +214,8 @@ for country in country_list:
         control=False,
         highlight_function=highlight_function, 
         tooltip=folium.features.GeoJsonTooltip(
-            fields=['NUTS_NAME', 'relative_income', f"{year}_relative_predicted", "diff_eurostat_llm_relative_normalized", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"],
-            aliases=["Region: ", "Relative income from Eurostat: ", "LLM predicted: ", "normalized diff: ", "std deviation for 3 llm prediction: ", "Average logprobs: ", "std deviation for logprobs: "],
+            fields=['NUTS_NAME', f"{year}", f"{year}_predicted", "country_income", 'relative_income', f"{year}_relative_predicted", "diff_eurostat_llm_relative_normalized", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"],
+            aliases=["Region: ", f'eurostat Iregion: ', "llm predicted Iregion: ", "Eurostat Icountry: ", "Eurostat Iregion - Icountry: ", "RI_llm: ", "normalized diff: ", "std deviation for 3 llm prediction: ", "Average logprobs: ", "std deviation for logprobs: "],
             style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
         )
     )
