@@ -53,6 +53,10 @@ gdf[f"{year}_deviation"] = gdf[f"{year}_deviation"].round(0)
 
 gdf_json = gdf.to_crs(epsg=4326).to_json()
 
+# ---------- #
+# Error maps #
+# ---------- #
+
 # Absolute
 m = folium.Map(location=[50, 20], zoom_start=5)
 folium.Choropleth(
@@ -90,14 +94,10 @@ hover = folium.features.GeoJson(
 m.add_child(hover)
 m.keep_in_front(m)
 
-#colormap = LinearColormap(['green', 'yellow', 'red'], vmin=-1000, vmax=1000).to_step(5)
-# colormap.add_to(m)
-
-
 m.save(f'./output/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 m.save(f'./docs/transformers/gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 
-# relative
+## Relative Income
 gdf['diff_eurostat_llm_relative'] = (gdf['2017_relative_predicted'] - gdf['relative_income']).round(0)
 gdf['diff_eurostat_llm_relative_normalized'] = abs(gdf['diff_eurostat_llm_relative']) / gdf[f"{year}"]
 
@@ -115,16 +115,6 @@ folium.Choropleth(
     line_opacity=0.2,
     legend_name=f'Normalized relative income "I" (Iregion - Icountry): Comparison between groundthruth data eurostat {year} and prediction for {model_short_name}'
 ).add_to(m)
-
-
-style_function = lambda x: {'fillColor': '#ffffff', 
-                            'color':'#000000', 
-                            'fillOpacity': 0.1, 
-                            'weight': 0.1}
-highlight_function = lambda x: {'fillColor': '#000000', 
-                                'color':'#000000', 
-                                'fillOpacity': 0.50, 
-                                'weight': 0.1}
 
 hover = folium.features.GeoJson(
     gdf,
@@ -163,15 +153,6 @@ for country in country_list:
         legend_name=f'Difference between eurostat {year} and {model_short_name}'
     ).add_to(m)
 
-    style_function = lambda x: {'fillColor': '#ffffff', 
-                                'color':'#000000', 
-                                'fillOpacity': 0.1, 
-                                'weight': 0.1}
-    highlight_function = lambda x: {'fillColor': '#000000', 
-                                    'color':'#000000', 
-                                    'fillOpacity': 0.50, 
-                                    'weight': 0.1}
-
     hover = folium.features.GeoJson(
         gdf,
         style_function=style_function, 
@@ -200,17 +181,6 @@ for country in country_list:
         line_opacity=0.2,
         legend_name=f'Relative income Iregion - Icountry: Comparison between groundthruth data eurostat {year} and prediction for {model_short_name}'
     ).add_to(m)
-
-
-    style_function = lambda x: {'fillColor': '#ffffff', 
-                                'color':'#000000', 
-                                'fillOpacity': 0.1, 
-                                'weight': 0.1}
-    highlight_function = lambda x: {'fillColor': '#000000', 
-                                    'color':'#000000', 
-                                    'fillOpacity': 0.50, 
-                                    'weight': 0.1}
-
     hover = folium.features.GeoJson(
         gdf,
         style_function=style_function, 
@@ -226,7 +196,10 @@ for country in country_list:
     m.keep_in_front(m)
     m.save(f'./docs/transformers/relative_gdp_{year}_nuts_{NUTS_Level}_{country}_llm_{model_short_name}.html')
 
-# pearson correlation
+# ------------------- #
+# pearson correlation #
+# ------------------- #
+
 ## Absolute
 correlation_results = []
 for country, group in gdf.groupby('CNTR_NAME'):
@@ -246,14 +219,12 @@ for country, group in gdf.groupby('CNTR_NAME'):
         except:
             print(f"error with {country}")
 
-# Créer un DataFrame des résultats
 corr_df = pd.DataFrame(correlation_results)
 corr_df_sorted = corr_df.sort_values(by='GDP', ascending=False)
 gdp_min = corr_df_sorted['GDP'].min()
 gdp_max = corr_df_sorted['GDP'].max()
 gdp_range_text = f"GDP Range: {gdp_min} - {gdp_max}"
 
-# Créer un barplot avec une color bar
 fig = px.bar(
     corr_df_sorted,
     x='Country',
@@ -265,7 +236,6 @@ fig = px.bar(
     labels={'Correlation': 'correlation', 'Country ordered by average income': 'Country'},
     template='plotly_white'
 )
-# Affichage du graphique
 fig.write_html(f'./docs/transformers/pearson_correlation_absolute_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 
 ## Relative
@@ -310,6 +280,10 @@ fig.write_html(f'./docs/transformers/pearson_correlation_relative_gdp_{year}_nut
 gdf.to_csv(f"./output/3_final_results.csv")
 
 
+# ------------------- #
+#   Map of Logprobs   #
+# ------------------- #
+
 m = folium.Map(location=[50, 20], zoom_start=5)
 folium.Choropleth(
     geo_data=gdf_json,
@@ -322,8 +296,6 @@ folium.Choropleth(
     line_opacity=0.2,
     legend_name=f'Avergage logprobs for absolute Income prediction'
 ).add_to(m)
-
-
 hover = folium.features.GeoJson(
     gdf,
     style_function=style_function, 
@@ -337,10 +309,6 @@ hover = folium.features.GeoJson(
 )
 m.add_child(hover)
 m.keep_in_front(m)
-
-#colormap = LinearColormap(['green', 'yellow', 'red'], vmin=-1000, vmax=1000).to_step(5)
-# colormap.add_to(m)
-
 m.save(f'./docs/transformers/{model_short_name}_income_average_logprobs.html')
 
 
@@ -356,23 +324,98 @@ folium.Choropleth(
     line_opacity=0.2,
     legend_name=f'Avergage logprobs for RI prediction'
 ).add_to(m)
-
-
 hover = folium.features.GeoJson(
     gdf,
     style_function=style_function, 
     control=False,
     highlight_function=highlight_function, 
     tooltip=folium.features.GeoJsonTooltip(
-        fields=['NUTS_NAME', str(year), f"{year}_predicted", "diff_eurostat_llm_normalized", f"{year}_deviation"],
-        aliases=["Region: ", "Eurostat GDP: ", "LLM predicted: ", "normalized diff: ", "std deviation for 3 llm prediction: "],
+        fields=['NUTS_NAME', f"{year}", f"{year}_predicted", "country_income", 'relative_income', f"{year}_relative_predicted", "diff_eurostat_llm_relative_normalized", f"{year}_relative_deviation", f"{year}_relative_logprobs", f"{year}_relative_logprobs_deviation"],
+        aliases=["Region: ", f'eurostat Iregion: ', "llm predicted Iregion: ", "Eurostat Icountry: ", "Eurostat Iregion - Icountry: ", "RI_llm: ", "normalized diff: ", "std deviation for 3 llm prediction: ", "Average logprobs: ", "std deviation for logprobs: "],
         style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
     )
 )
 m.add_child(hover)
 m.keep_in_front(m)
-
-#colormap = LinearColormap(['green', 'yellow', 'red'], vmin=-1000, vmax=1000).to_step(5)
-# colormap.add_to(m)
-
 m.save(f'./docs/transformers/{model_short_name}_RI_average_logprobs.html')
+
+
+# ------------------- #
+# Barplot of Logprobs #
+# ------------------- #
+gdf_long = gdf.melt(
+    id_vars=['CNTR_NAME', '2017'], 
+    value_vars=['diff_eurostat_llm_normalized', '2017_logprobs'], 
+    var_name='Metric', 
+    value_name='Value'
+)
+gdf_long = pd.merge(
+    gdf_long, 
+    gdf[['CNTR_NAME', 'NUTS_NAME']],  # Keep only necessary columns for the merge
+    on='CNTR_NAME',
+    how='left'
+)
+gdf_long = gdf_long.sort_values(by='2017', ascending=False)
+fig = px.bar(
+    gdf_long,
+    x='CNTR_NAME',
+    y='Value',
+    color='Metric',
+    barmode='group',  # Ensures bars are grouped side by side
+    # text='Value',  # Adds value annotations
+    title='Diff Income with logprobs',
+    color_discrete_map={
+        'diff_eurostat_llm_normalized': 'yellow', 
+        '2017_logprobs': 'cyan'
+    },
+    template='plotly_white',
+    hover_data={'NUTS_NAME': True, '2017': True}
+)
+fig.update_layout(
+    xaxis_title='Country',
+    yaxis_title='Value',
+    legend_title='Metric',
+    title_font_size=20,
+    height=600,
+    width=1000
+)
+fig.write_html(f'./docs/transformers/barplot_logprobs_absolute_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
+
+# Relative
+gdf_long = gdf.melt(
+    id_vars=['CNTR_NAME', '2017'], 
+    value_vars=['diff_eurostat_llm_relative_normalized', '2017_relative_logprobs'], 
+    var_name='Metric', 
+    value_name='Value'
+)
+gdf_long = pd.merge(
+    gdf_long, 
+    gdf[['CNTR_NAME', 'NUTS_NAME']],  # Keep only necessary columns for the merge
+    on='CNTR_NAME',
+    how='left'
+)
+gdf_long = gdf_long.sort_values(by='2017', ascending=False)
+fig = px.bar(
+    gdf_long,
+    x='CNTR_NAME',
+    y='Value',
+    color='Metric',
+    barmode='group',  # Ensures bars are grouped side by side
+    # text='Value',  # Adds value annotations
+    title='Diff Income with logprobs',
+    color_discrete_map={
+        'diff_eurostat_llm_relative_normalized': 'yellow', 
+        '2017_relative_logprobs': 'cyan'
+    },
+    template='plotly_white',
+    hover_data={'NUTS_NAME': True, '2017': True}
+)
+fig.update_layout(
+    xaxis_title='Country',
+    yaxis_title='Value',
+    legend_title='Metric',
+    title_font_size=20,
+    height=600,
+    width=1000
+)
+fig.write_html(f'./docs/transformers/barplot_logprobs_relative_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
