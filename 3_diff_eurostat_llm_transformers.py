@@ -289,14 +289,12 @@ for country, group in gdf.groupby('CNTR_NAME'):
             # print(f"Relative: {group['diff_eurostat_llm_relative_normalized']}")
             # print(f"logprobs: {group['2017_logprobs']}")
 
-# Créer un DataFrame des résultats
 corr_df = pd.DataFrame(correlation_results)
 corr_df_sorted = corr_df.sort_values(by='GDP', ascending=False)
 gdp_min = corr_df_sorted['GDP'].min()
 gdp_max = corr_df_sorted['GDP'].max()
 gdp_range_text = f"GDP Range: {gdp_min} - {gdp_max}"
 
-# Créer un barplot avec une color bar
 fig = px.bar(
     corr_df_sorted,
     x='Country',
@@ -308,5 +306,73 @@ fig = px.bar(
     labels={'Correlation': 'correlation', 'Country  ordered by average income': 'Country'},
     template='plotly_white'
 )
-# Affichage du graphique
 fig.write_html(f'./docs/transformers/pearson_correlation_relative_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
+gdf.to_csv(f"./output/3_final_results.csv")
+
+
+m = folium.Map(location=[50, 20], zoom_start=5)
+folium.Choropleth(
+    geo_data=gdf_json,
+    data=gdf,  
+    # columns=['NUTS_ID', 'diff_eurostat_llm'], 
+    columns=['NUTS_ID', '2017_logprobs'], 
+    key_on='feature.properties.NUTS_ID',  
+    fill_color='RdYlGn', 
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name=f'Avergage logprobs for absolute Income prediction'
+).add_to(m)
+
+
+hover = folium.features.GeoJson(
+    gdf,
+    style_function=style_function, 
+    control=False,
+    highlight_function=highlight_function, 
+    tooltip=folium.features.GeoJsonTooltip(
+        fields=['NUTS_NAME', str(year), f"{year}_predicted", "diff_eurostat_llm_normalized", f"{year}_deviation"],
+        aliases=["Region: ", "Eurostat GDP: ", "LLM predicted: ", "normalized diff: ", "std deviation for 3 llm prediction: "],
+        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+    )
+)
+m.add_child(hover)
+m.keep_in_front(m)
+
+#colormap = LinearColormap(['green', 'yellow', 'red'], vmin=-1000, vmax=1000).to_step(5)
+# colormap.add_to(m)
+
+m.save(f'./docs/transformers/{model_short_name}_income_average_logprobs.html')
+
+
+m = folium.Map(location=[50, 20], zoom_start=5)
+folium.Choropleth(
+    geo_data=gdf_json,
+    data=gdf,  
+    # columns=['NUTS_ID', 'diff_eurostat_llm'], 
+    columns=['NUTS_ID', '2017_relative_logprobs'], 
+    key_on='feature.properties.NUTS_ID',  
+    fill_color='RdYlGn', 
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name=f'Avergage logprobs for RI prediction'
+).add_to(m)
+
+
+hover = folium.features.GeoJson(
+    gdf,
+    style_function=style_function, 
+    control=False,
+    highlight_function=highlight_function, 
+    tooltip=folium.features.GeoJsonTooltip(
+        fields=['NUTS_NAME', str(year), f"{year}_predicted", "diff_eurostat_llm_normalized", f"{year}_deviation"],
+        aliases=["Region: ", "Eurostat GDP: ", "LLM predicted: ", "normalized diff: ", "std deviation for 3 llm prediction: "],
+        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+    )
+)
+m.add_child(hover)
+m.keep_in_front(m)
+
+#colormap = LinearColormap(['green', 'yellow', 'red'], vmin=-1000, vmax=1000).to_step(5)
+# colormap.add_to(m)
+
+m.save(f'./docs/transformers/{model_short_name}_RI_average_logprobs.html')
