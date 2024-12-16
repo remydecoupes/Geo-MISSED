@@ -10,7 +10,7 @@ from tqdm import tqdm
 tqdm.pandas()
 
 # Model and tokenizer setup
-MODEL = "Qwen/Qwen2.5-7B-Instruct"  # Example model ID
+MODEL = "Qwen/Qwen2.5-7B-Instruct" 
 model_short_name = "Qwen2.5-7B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 

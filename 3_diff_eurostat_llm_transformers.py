@@ -7,6 +7,9 @@ import folium
 from branca.colormap import LinearColormap
 import branca.colormap as cm
 import numpy as np
+import pandas as pd
+from scipy.stats import pearsonr
+import plotly.express as px
 
 MODEL = "Qwen/Qwen2.5-7B-Instruct"  
 model_short_name = "Qwen2.5-7B-Instruct"
@@ -222,3 +225,88 @@ for country in country_list:
     m.add_child(hover)
     m.keep_in_front(m)
     m.save(f'./docs/transformers/relative_gdp_{year}_nuts_{NUTS_Level}_{country}_llm_{model_short_name}.html')
+
+# pearson correlation
+## Absolute
+correlation_results = []
+for country, group in gdf.groupby('CNTR_NAME'):
+    if group['diff_eurostat_llm_normalized'].notna().any() and group['2017_relative_logprobs'].notna().any():
+    # if group['diff_eurostat_llm_relative'].notna().any() and group['2017_relative_logprobs'].notna().any():
+        try:
+            corr, _ = pearsonr(
+                group['diff_eurostat_llm_normalized'].dropna(),
+                # group['diff_eurostat_llm_relative'].dropna(),
+                group['2017_relative_logprobs'].dropna()
+            )
+            correlation_results.append({
+                'Country': country,
+                'Correlation': corr,
+                'GDP': group['2017'].dropna().values[0]
+            })
+        except:
+            print(f"error with {country}")
+
+# Créer un DataFrame des résultats
+corr_df = pd.DataFrame(correlation_results)
+corr_df_sorted = corr_df.sort_values(by='GDP', ascending=False)
+gdp_min = corr_df_sorted['GDP'].min()
+gdp_max = corr_df_sorted['GDP'].max()
+gdp_range_text = f"GDP Range: {gdp_min} - {gdp_max}"
+
+# Créer un barplot avec une color bar
+fig = px.bar(
+    corr_df_sorted,
+    x='Country',
+    y='Correlation',
+    color='Correlation',
+    hover_data={'GDP': True},
+    color_continuous_scale=["red", "yellow", "green"],
+    title='Pearson Correlation between Absolute predict Income error vs Logprobs - by Country Ordered by GDP',
+    labels={'Correlation': 'correlation', 'Country ordered by average income': 'Country'},
+    template='plotly_white'
+)
+# Affichage du graphique
+fig.write_html(f'./docs/transformers/pearson_correlation_absolute_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
+
+## Relative
+correlation_results = []
+for country, group in gdf.groupby('CNTR_NAME'):
+    if group['diff_eurostat_llm_relative_normalized'].notna().any() and group['2017_logprobs'].notna().any():
+        # if group['2017_logprobs'].std() == 0:
+            # group['2017_logprobs'] += np.random.normal(0, 1e-4, size=len(group))
+        try:
+            corr, _ = pearsonr(
+                group['diff_eurostat_llm_relative_normalized'].dropna(),
+                group['2017_logprobs'].dropna()
+            )
+            correlation_results.append({
+                'Country': country,
+                'Correlation': corr,
+                'GDP': group['2017'].dropna().values[0]
+            })
+        except:
+            print(f"error with {country}")
+            # print(f"Relative: {group['diff_eurostat_llm_relative_normalized']}")
+            # print(f"logprobs: {group['2017_logprobs']}")
+
+# Créer un DataFrame des résultats
+corr_df = pd.DataFrame(correlation_results)
+corr_df_sorted = corr_df.sort_values(by='GDP', ascending=False)
+gdp_min = corr_df_sorted['GDP'].min()
+gdp_max = corr_df_sorted['GDP'].max()
+gdp_range_text = f"GDP Range: {gdp_min} - {gdp_max}"
+
+# Créer un barplot avec une color bar
+fig = px.bar(
+    corr_df_sorted,
+    x='Country',
+    y='Correlation',
+    color='Correlation',
+    hover_data={'GDP': True},
+    color_continuous_scale=["red", "yellow", "green"],
+    title='Pearson Correlation between relative predict Income error vs Logprobs - by Country Ordered by GDP',
+    labels={'Correlation': 'correlation', 'Country  ordered by average income': 'Country'},
+    template='plotly_white'
+)
+# Affichage du graphique
+fig.write_html(f'./docs/transformers/pearson_correlation_relative_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
