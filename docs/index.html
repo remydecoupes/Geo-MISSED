@@ -60,17 +60,20 @@
                     <th colspan="2">France</th>
                     <th colspan="2">Italy</th>
                     <th colspan="2">Spain</th>
+		    <th colspan="2">Correlation</th>
                 </tr>
                 <tr>
-                    <th>Absolute</th>
+                    <th>Income</th>
                     <th>Relative</th>
-                    <th>Absolute</th>
+                    <th>Income</th>
                     <th>Relative</th>
-                    <th>Absolute</th>
+                    <th>Income</th>
                     <th>Relative</th>
-                    <th>Absolute</th>
+                    <th>Income</th>
                     <th>Relative</th>
-                    <th>Absolute</th>
+                    <th>Income</th>
+                    <th>Relative</th>
+                    <th>Income</th>
                     <th>Relative</th>
                 </tr>
             </thead>
@@ -87,22 +90,40 @@
                     <td><a href="./transformers/relative_gdp_2017_nuts_1_Italy_llm_Qwen2.5-7B-Instruct.html">View</a></td>
                     <td><a href="./transformers/gdp_2017_nuts_1_Spain_llm_Qwen2.5-7B-Instruct.html">View</a></td>
                     <td><a href="./transformers/relative_gdp_2017_nuts_1_Spain_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/pearson_correlation_absolute_gdp_2017_nuts_1_llm_Qwen2.5-7B-Instruct.html">View</a></td>
+                    <td><a href="./transformers/pearson_correlation_relative_gdp_2017_nuts_1_llm_Qwen2.5-7B-Instruct.html">View</a></td>
                 </tr>
             </tbody>
         </table>
-        <p><b>Absolute Income prediction</b></p>
-        <p>The absolute predicted average income per habitat for a region (denoted as \( I_{\text{region/LLM}} \)) against the ground truth average income per habitat from Eurostat (denoted as \( I_{\text{region/Eurostat}} \)).</p>
-    
-        <p><b>Relative Income Prediction</b></p>
-        <p>The relative predicted relative income (\( RI_{\text{LLM}} \)) against the relative difference between the ground truth regional income and the ground truth national income, both obtained from Eurostat.</p>
         
         <h2>Definitions</h2>
-        <ul>
-            <li><b>\( I_{\text{region/LLM}} \):</b> Average income per habitat for a region predicted by the LLM.</li>
-            <li><b>\( I_{\text{region/Eurostat}} \):</b> Ground truth average income per habitat for a region from Eurostat.</li>
-            <li><b>\( I_{\text{country/Eurostat}} \):</b> Ground truth average income per habitat for a country from Eurostat.</li>
-            <li><b>\( RI_{\text{LLM}} \):</b> Relative income predicted by the LLM.</li>
-        </ul>
+<table>
+	<thead>
+                <tr>
+                    <th rowspan="2">Income (\( I\))</th>
+                    <th rowspan="2">Relative Icome (\( RI\))</th>
+                    <th rowspan="2">Difference (\( Diff\))</th>
+                    <th rowspan="2">Normalized Difference (\( NormDiff\))</th>
+                </tr>
+        </thead>
+        <tbody>
+	    <tr>
+		<td><b>\( I_{\text{region/LLM}} \):</b> Average income per habitat for a region predicted by the LLM.</td>
+		<td><b>\( RI_{\text{LLM}} \):</b> Relative income predicted by the LLM.</td>
+		<td><b>\( Diff_{\text{I}} \):</b> \( I_{\text{region/Eurostat}} \) - \( I_{\text{region/LLM}} \) </td>
+		<td><b>\( NormDiff_{\text{I}} \):</b> (\( I_{\text{region/Eurostat}} \) - \( I_{\text{region/LLM}} \)) /  \( I_{\text{country/Eurostat}} \)</td>
+	    </tr>
+	    <tr>
+		<td><b>\( I_{\text{region/Eurostat}} \):</b> Ground truth average income per habitat for a region from Eurostat.</td>
+		<td><b>\( RI_{\text{Eurostat}} \):</b> \( I_{\text{region/Eurostat}} \) - \( I_{\text{country/Eurostat}} \)</td>
+		<td><b>\( Diff_{\text{RI}} \):</b> \( RI_{\text{LLM}} \) - \( RI_{\text{Eurostat}} \) </td>
+		<td><b>\( NormDiff_{\text{RI}} \):</b> (\( RI_{\text{LLM}} \) - \( RI_{\text{Eurostat}} \)) / \( I_{\text{country/Eurostat}} \) </td>
+	    </tr>
+	    <tr>
+		<td><b>\( I_{\text{country/Eurostat}} \):</b> Ground truth average income per habitat for a country from Eurostat.</td>
+	    </tr>
+	</tbody>
+</table>
 
     <h2>With Ollama backend (without log probs)</h2>
     <!-- NUTS Level 1 Table -->
