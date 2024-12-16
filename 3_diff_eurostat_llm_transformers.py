@@ -376,8 +376,6 @@ fig.update_layout(
     yaxis_title='Value',
     legend_title='Metric',
     title_font_size=20,
-    height=600,
-    width=1000
 )
 fig.write_html(f'./docs/transformers/barplot_logprobs_absolute_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
 
@@ -415,7 +413,5 @@ fig.update_layout(
     yaxis_title='Value',
     legend_title='Metric',
     title_font_size=20,
-    height=600,
-    width=1000
 )
 fig.write_html(f'./docs/transformers/barplot_logprobs_relative_gdp_{year}_nuts_{NUTS_Level}_llm_{model_short_name}.html')
