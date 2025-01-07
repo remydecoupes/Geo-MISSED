@@ -30,7 +30,7 @@ See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
 ```bash
 conda create -n geobias python=3.10 pip ipython
 conda activate geobias 
-pip install geopandas pandas folium langchain langchain_community langchain_core timeout_decorator langchain_openai matplotlib pycountry torch transformers 
+pip install geopandas pandas folium langchain langchain_community langchain_core timeout_decorator langchain_openai matplotlib pycountry torch transformers datasets seaborn
 pip install 'accelerate>=0.26.0'
 pip install -U bitsandbytes
 ```
