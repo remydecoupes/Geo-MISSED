@@ -19,9 +19,12 @@ See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
 
 | Title | link | metadata | name file |
 |---|---|---|---|
-| GDP at current market prices by NUTS 3 regions| [link](https://ec.europa.eu/eurostat/web/main/data/database) | [metadata](https://ec.europa.eu/eurostat/cache/metadata/en/reg_eco10_esms.htm) | [estat_nama_10r_3gdp.tsv](./data/estat_nama_10r_3gdp.tsv) |
 | NUTS3 region| | | [NUTS_RG_01M_2024_3035.geojson](./data/NUTS_RG_01M_2024_3035.geojson)|
 | capitals of all the world | [link](https://ec.europa.eu/eurostat/web/gisco/geodata/administrative-units/countries) | - | CNTR_RG_20M_2024_3035.geojson |
+| Eurostat GDP at current market prices by NUTS 3 regions| [link](https://ec.europa.eu/eurostat/web/main/data/database) | [metadata](https://ec.europa.eu/eurostat/cache/metadata/en/reg_eco10_esms.htm) | [estat_nama_10r_3gdp.tsv](./data/estat_nama_10r_3gdp.tsv) |
+| Eurostat population density| [link](https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/demo_r_d3dens/?format=TSV&compressed=true) | - | estat_demo_r_d3dens.tsv | 
+| Eurostat Persons at risk of poverty or social exclusion by NUTS region  | [link](https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/ilc_peps11n/?format=TSV&compressed=true) |  | estat_ilc_peps11n.tsv |
+| Eurostat Population by broad age group and NUTS 3 region  | [link](https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/cens_21agr3/?format=TSV&compressed=true) |  | estat_cens_21agr3.tsv |
 
 ## Install environment
 
