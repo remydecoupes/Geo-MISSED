@@ -79,6 +79,7 @@ for eurostat_dict in eurostat_data_files:
 
     if indicator == "age_index": # compute ratio
         # df_eurostat = df_eurostat[df_eurostat["age"].isin(["Total", "Y_LT15", "Y65-84", "Y_GE85"])]
+        df_eurostat = df_eurostat[df_eurostat["sex"] == "T"]
         df_Y_LT15 = df_eurostat[df_eurostat["age"] == "Y_LT15"].reset_index()
         df_Y_65_84 = df_eurostat[df_eurostat["age"] == "Y65-84"].reset_index()
         df_Y_GE85 = df_eurostat[df_eurostat["age"] == "Y_GE85"].reset_index()
