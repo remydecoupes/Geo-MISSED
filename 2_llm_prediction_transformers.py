@@ -1,5 +1,10 @@
+import os
+os.environ['TRANSFORMERS_CACHE'] = "/data/remy/huggingface_hub"
+os.environ['HF_HOME'] = "/data/remy/huggingface_hub"
+
+
 import argparse
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -8,6 +13,15 @@ import pycountry
 import statistics
 from tqdm import tqdm
 import re
+
+import configparser
+
+credential_file = "credentials.ini"
+credential_config = configparser.ConfigParser()
+credential_config.read(credential_file)
+
+hf_access_token = credential_config['HF']["HF_API"]
+from huggingface_hub import login; login(token=hf_access_token)
 
 tqdm.pandas()
 
@@ -104,18 +118,22 @@ def prediction(NUTS_ID, country, indicator, year):
         print("wrong indicator !!")
 
     # Tokenize input prompt
-    inputs = tokenizer.apply_chat_template(
-        messages, 
-        tokenize=False,
-        add_generation_prompt=True
-        )
-    inputs = tokenizer([inputs], return_tensors="pt").to("cuda")
+    try:
+        inputs = tokenizer.apply_chat_template(
+            messages, 
+            tokenize=False,
+            add_generation_prompt=True
+            )
+        inputs = tokenizer([inputs], return_tensors="pt").to("cuda")
+    except: # there is no chat template into the tokenizer.json
+        inputs = tokenizer(messages[0]["content"], return_tensors="pt").to("cuda")
     
     # Generate output
     outputs = model.generate(
         **inputs,
         max_length=256,
         pad_token_id=tokenizer.pad_token_id,
+        do_sample=True,
         temperature=0.3,
         # top_p=0.9,
         # top_k=50,
@@ -205,18 +223,22 @@ def relative_prediction(NUTS_ID, country, country_indicator, indicator, year):
         print("wrong indicator !!")
 
     # Tokenize input prompt
-    inputs = tokenizer.apply_chat_template(
-        messages, 
-        tokenize=False,
-        add_generation_prompt=True
-        )
-    inputs = tokenizer([inputs], return_tensors="pt").to("cuda")
+    try:
+        inputs = tokenizer.apply_chat_template(
+            messages, 
+            tokenize=False,
+            add_generation_prompt=True
+            )
+        inputs = tokenizer([inputs], return_tensors="pt").to("cuda")
+    except: # there is no chat template into the tokenizer.json
+        inputs = tokenizer(messages[0]["content"], return_tensors="pt").to("cuda")
     
     # Generate output
     outputs = model.generate(
         **inputs,
         max_length=256,
         pad_token_id=tokenizer.pad_token_id,
+        do_sample=True,
         temperature=0.3,
         # top_p=0.9,
         # top_k=50,
@@ -249,7 +271,7 @@ def average_prediction(row, indicator, year):
     Compute the average and deviation of predictions for a given NUTS_ID and country.
     Expects the row to contain both 'NUTS_ID' and 'country'.
     """
-    number_prediction = 3
+    number_prediction = 10
     predictions = []
     logprobs = []
 
@@ -259,9 +281,19 @@ def average_prediction(row, indicator, year):
         logprobs.append(logprob)
 
     # Handle potential NaN values in predictions
-    predictions = [float(p) for p in predictions if not pd.isna(p)]
+    try:
+        predictions = [float(p) for p in predictions if not pd.isna(p)]
+    except:
+        predictions_filtred = []
+        for p in predictions:
+            try:
+                p_ = float(p)
+                predictions_filtred.append(p_)
+            except:
+                print(f"Could not parse: {p}")
+        predictions = predictions_filtred
     logprobs = [float(p) for p in logprobs if not pd.isna(p)]
-    print(f'{row["NUTS_NAME"]}/{row["country"]}: {predictions} | {logprobs}')
+    # print(f'{row["NUTS_NAME"]}/{row["country"]}: {predictions} | {logprobs}')
 
     if predictions:
         average = sum(predictions) / len(predictions)
@@ -278,22 +310,33 @@ def average_prediction(row, indicator, year):
 
     return average, deviation, logprobs_average, logprobs_deviation
 
-def average_relative_prediction(row, indicator, indicator_country, year):
+def average_relative_prediction(row, indicator, year):
     """
 .
     """
-    number_prediction = 3
+    number_prediction = 10
     predictions = []
     logprobs = []
 
     for _ in range(number_prediction):
-        #relative_prediction(NUTS_ID, country, capital, capital_income):
-        prediction_value, logprob = relative_prediction(row["NUTS_NAME"], row["country"], row["country_income"], indicator, year)
+        # relative_prediction(NUTS_ID, country, country_indicator, indicator, year)
+        prediction_value, logprob = relative_prediction(row["NUTS_NAME"], row["country"], row["average_country_indicator"], indicator, year)
         predictions.append(prediction_value)
         logprobs.append(logprob)
 
     # Handle potential NaN values in predictions
-    predictions = [float(p) for p in predictions if not pd.isna(p)]
+    try:
+        predictions = [float(p) for p in predictions if not pd.isna(p)]
+    except:
+        predictions_filtred = []
+        for p in predictions:
+            try:
+                p_ = float(p)
+                predictions_filtred.append(p_)
+            except:
+                print(f"Could not parse: {p}")
+        predictions = predictions_filtred
+
     logprobs = [float(p) for p in logprobs if not pd.isna(p)]
     print(f'{row["NUTS_NAME"]}/{row["country"]}: {predictions} | {logprobs}')
 
@@ -305,7 +348,7 @@ def average_relative_prediction(row, indicator, indicator_country, year):
         else:
             deviation = np.nan
     else:
-        average = np.nan
+        average = np.nan                #load_in_8bit=True,  # Enable 8-bit quantization
         deviation = np.nan
     if logprobs:
         logprobs_average = sum(logprobs) / len(logprobs)
@@ -325,25 +368,37 @@ if __name__ == "__main__":
         parser.add_argument(
             "--model",
             type=str,
-            default="Qwen/Qwen2.5-7B-Instruct",
+            # default="Qwen/Qwen2.5-7B-Instruct",
+            default="mistralai/Mistral-7B-v0.3",
             help="Name of the model to load. Default is 'Qwen/Qwen2.5-7B-Instruct'."
         )
         args = parser.parse_args()
         MODEL = args.model
     except:
         MODEL = "Qwen/Qwen2.5-7B-Instruct"
+        # MODEL = "meta-llama/Llama-3.1-8B-Instruct"
     model_short_name = MODEL.split('/')[-1]  # Extract short name from full model path
 
     print(f"Loading model: {MODEL} ({model_short_name})")
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(MODEL)
-        model = AutoModelForCausalLM.from_pretrained(
-            MODEL,
-            device_map="auto",
-            torch_dtype=torch.float16,
-            load_in_8bit=True,  # Enable 8-bit quantization
-        )
+        if "70B" in MODEL or "72B" in MODEL:
+            model = AutoModelForCausalLM.from_pretrained(
+                MODEL,
+                device_map="auto",
+                do_sample=True,
+                torch_dtype=torch.float16,
+                quantization_config=BitsAndBytesConfig(load_in_4bit=True)
+            )
+        else: # no quantization
+            model = AutoModelForCausalLM.from_pretrained(
+                MODEL,
+                device_map="auto",
+                do_sample=True,
+                torch_dtype=torch.float16,
+            )
+        model.generation_config.pad_token_id = tokenizer.pad_token_id
         print("Model and tokenizer loaded successfully.")
     except Exception as e:
         print(f"Error loading model: {e}")
@@ -357,15 +412,15 @@ if __name__ == "__main__":
         df = pd.read_csv(path)
         df["country"] = df["CNTR_CODE"].apply(lambda code: pycountry.countries.get(alpha_2=code).name if pycountry.countries.get(alpha_2=code) else "Unknown")
 
-        # df = df.iloc[0:100]
-        # df[[f"{indicator}_predicted", f"{indicator}_deviation", f"{indicator}_logprobs", f"{indicator}_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
+        df[[f"{indicator}_absolute_predicted", f"{indicator}_absolute_deviation", f"{indicator}_absolute_logprobs", f"{indicator}_absolute_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
+        try :
+            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
+        except:
+            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
+
+        # df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
         # try :
-        #     df.to_csv(f'./output/{indicator}_{year}_nuts_llm_{model_short_name}.csv')
+        #     df.to_csv(f'./output/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+        #     # df.to_csv(f'./output/{indicator}_{year}_nuts_llm_{model_short_name}.csv')
         # except:
         #     df.to_csv(f'./output/{indicator}_{year}_nuts_llm_error_on_name.csv')
-
-        df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
-        try :
-            df.to_csv(f'./output/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
-        except:
-            df.to_csv(f'./output/{indicator}_{year}_nuts_llm_error_on_name.csv')
