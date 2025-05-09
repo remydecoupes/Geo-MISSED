@@ -13,6 +13,7 @@ import pycountry
 import statistics
 from tqdm import tqdm
 import re
+from pathlib import Path
 
 import configparser
 
@@ -293,7 +294,7 @@ def average_prediction(row, indicator, year):
                 print(f"Could not parse: {p}")
         predictions = predictions_filtred
     logprobs = [float(p) for p in logprobs if not pd.isna(p)]
-    # print(f'{row["NUTS_NAME"]}/{row["country"]}: {predictions} | {logprobs}')
+    print(f'{row["NUTS_NAME"]}/{row["country"]}: {predictions} | {logprobs}')
 
     if predictions:
         average = sum(predictions) / len(predictions)
@@ -334,7 +335,11 @@ def average_relative_prediction(row, indicator, year):
                 p_ = float(p)
                 predictions_filtred.append(p_)
             except:
-                print(f"Could not parse: {p}")
+                try: # remove explanations between paranthesis (Llama-8B-instruct)
+                    p_ = float(re.sub(r"\s*\(.*?\)", "", p))
+                    predictions_filtred.append(p_)
+                except:
+                    print(f"Could not parse: {p}")
         predictions = predictions_filtred
 
     logprobs = [float(p) for p in logprobs if not pd.isna(p)]
@@ -369,14 +374,14 @@ if __name__ == "__main__":
             "--model",
             type=str,
             # default="Qwen/Qwen2.5-7B-Instruct",
-            default="mistralai/Mistral-7B-v0.3",
-            help="Name of the model to load. Default is 'Qwen/Qwen2.5-7B-Instruct'."
+            default="meta-llama/Llama-3.1-8B-Instruct",
+            help="Name of the model to load. Default is 'meta-llama/Llama-3.1-8B-Instruct'."
         )
         args = parser.parse_args()
         MODEL = args.model
     except:
-        MODEL = "Qwen/Qwen2.5-7B-Instruct"
-        # MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+        # MODEL = "Qwen/Qwen2.5-7B-Instruct"
+        MODEL = "meta-llama/Llama-3.1-8B-Instruct"
     model_short_name = MODEL.split('/')[-1]  # Extract short name from full model path
 
     print(f"Loading model: {MODEL} ({model_short_name})")
@@ -412,15 +417,24 @@ if __name__ == "__main__":
         df = pd.read_csv(path)
         df["country"] = df["CNTR_CODE"].apply(lambda code: pycountry.countries.get(alpha_2=code).name if pycountry.countries.get(alpha_2=code) else "Unknown")
 
-        df[[f"{indicator}_absolute_predicted", f"{indicator}_absolute_deviation", f"{indicator}_absolute_logprobs", f"{indicator}_absolute_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
-        try :
-            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
-        except:
-            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
+        # Absolute
+        file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
+        if file_path.exists():
+            print("\t Absolute: already processed")
+        else:
+            df[[f"{indicator}_absolute_predicted", f"{indicator}_absolute_deviation", f"{indicator}_absolute_logprobs", f"{indicator}_absolute_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
+            try :
+                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
+            except:
+                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
 
-        # df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
-        # try :
-        #     df.to_csv(f'./output/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
-        #     # df.to_csv(f'./output/{indicator}_{year}_nuts_llm_{model_short_name}.csv')
-        # except:
-        #     df.to_csv(f'./output/{indicator}_{year}_nuts_llm_error_on_name.csv')
+        # Relative
+        file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+        if file_path.exists():
+            print("\t Relative: already processed")
+        else:
+            df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
+            try :
+                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+            except:
+                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')

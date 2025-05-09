@@ -42,6 +42,15 @@ pip install -U bitsandbytes
 
 You have to donwload the data files into data folder
 
+**Reproduce the study**:
+```bash
+python 1_eurostat_preprocessing.py
+chmod u+x 2_run_all_transformers_models.sh
+./2_run_all_transformers_models.sh
+python 3_diff_eurostat_llm_transformers.py
+```
+
+
 -------
 <img align="left" src="https://www.umr-tetis.fr/images/logo-header-tetis.png">
 

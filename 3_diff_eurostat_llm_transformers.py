@@ -15,64 +15,11 @@ import json, requests
 import os
 import math
 from urllib.parse import urlparse
-
-MODEL = "Qwen/Qwen2.5-7B-Instruct"  
-model_short_name = "Qwen2.5-7B-Instruct"
+import argparse
 
 number_prediction = 10
 NUTS_Level = 3
 
-data_dir = "./output"
-eurostat_data_files = [
-    {
-        "indicator": "income",
-        "path_absolute": f"{data_dir}/income_2017_nuts_llm_{model_short_name}_absolute.csv",
-        "path_relative": f"{data_dir}/income_2017_nuts_llm_{model_short_name}_relative.csv",
-        "complete_year": "2017",
-        "unit": "EUR_HAB"
-    },
-    {
-        "indicator": "pop_density",
-        "path_absolute": f"{data_dir}/pop_density_2018_nuts_llm_{model_short_name}_absolute.csv",
-        "path_relative": f"{data_dir}/pop_density_2018_nuts_llm_{model_short_name}_relative.csv",
-        "complete_year": "2018",
-        "unit": "PER_KM2",
-        "nan": ":", # null value are ":" and not empty cell
-    },
-    {
-        "indicator": "poverty",
-        "path_absolute": f"{data_dir}/poverty_2022_nuts_llm_{model_short_name}_absolute.csv",
-        "path_relative": f"{data_dir}/poverty_2022_nuts_llm_{model_short_name}_relative.csv",
-        "complete_year": "2022",
-        "unit": "PC",
-        "nan": ":"
-    },
-    {
-        "indicator": "age_index",
-        "path_absolute": f"{data_dir}/age_index_2021_nuts_llm_{model_short_name}_absolute.csv",
-        "path_relative": f"{data_dir}/age_index_2021_nuts_llm_{model_short_name}_relative.csv",
-        "complete_year": "2021",
-        "unit": "NR"
-    }
-]
-
-country_list = ['Austria', 'Albania', 'Belgium', 'Bulgaria', 'Switzerland',
-       'Czechia', 'Cyprus', 'Germany', 'Denmark', 'Unknown', 'Estonia',
-       'Spain', 'France', 'Finland', 'Croatia', 'Hungary', 'Italy',
-       'Ireland', 'Norway', 'Netherlands', 'Montenegro',
-       'North Macedonia', 'Lithuania', 'Malta', 'Luxembourg', 'Latvia',
-       'Romania', 'Poland', 'Portugal', 'Serbia', 'Türkiye', 'Sweden',
-       'Slovakia', 'Slovenia']
-country_list = ['Germany', 'Spain', 'France', 'Italy']
-
-style_function = lambda x: {'fillColor': '#ffffff', 
-                            'color':'#000000', 
-                            'fillOpacity': 0.1, 
-                            'weight': 0.1}
-highlight_function = lambda x: {'fillColor': '#000000', 
-                                'color':'#000000', 
-                                'fillOpacity': 0.50, 
-                                'weight': 0.1}
 # ------------------- #
 # Bivariate map       #
 # ------------------- #
@@ -344,98 +291,239 @@ def create_bivariate_map(df, colors, geojson, x='x', y='y', ids='id', name='name
 
     return fig
 
-for eurostat_dict in eurostat_data_files:
-    nuts_level_max = 3
-    for expe in ["relative"]:
-    # for expe in ["absolute", "relative"]:
-        indicator = eurostat_dict["indicator"]
-        path = eurostat_dict[f"path_{expe}"]
-        year = eurostat_dict["complete_year"]
-        if indicator == "poverty":
-            nuts_level_max = 2
-        for NUTS_Level in range(1, nuts_level_max+1):
 
-            df = pd.read_csv(path)
-
-            try :
-                df['geometry'] = df['geometry'].apply(wkt.loads)
-            except:
-                print("geometry loading wkt: already done")
-            gdf = gpd.GeoDataFrame(df, geometry='geometry')
-            if gdf.crs is None:
-                gdf = gdf.set_crs(epsg=3035)  # Ajustez si nécessaire (EPSG initial probable)
-            gdf = gdf.to_crs(epsg=4326)
-
-            gdf = gdf[gdf["LEVL_CODE"] == NUTS_Level]
-            gdf[f'{indicator}_{expe}_predicted'] = gdf[f'{indicator}_{expe}_predicted'].round(0)
-            if expe == "absolute":
-                gdf['diff_eurostat_llm'] = ((gdf[f'{indicator}_{expe}_predicted'] - gdf['data'])).round(0)
-                gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf['data']
-            else:
-                gdf['diff_eurostat_llm'] = ((gdf[f'{indicator}_{expe}_predicted'] - gdf[f'relative_{indicator}'])).round(0)
-                gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf[f'average_country_indicator']
-            gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
-
-            
-
-            gdf[f"{indicator}_{expe}_deviation"] = gdf[f"{indicator}_{expe}_deviation"].round(0)
-
-            gdf_json = gdf.to_crs(epsg=4326).to_json()
-
-            # ---------- #
-            # Error maps #
-            # ---------- #
-            m = folium.Map(location=[50, 20], zoom_start=5)
-            folium.Choropleth(
-                geo_data=gdf_json,
-                data=gdf,  
-                columns=['NUTS_ID', 'diff_eurostat_llm_normalized'], 
-                key_on='feature.properties.NUTS_ID',  
-                fill_color='RdYlGn_r', 
-                fill_opacity=0.7,
-                line_opacity=0.2,
-                legend_name=f'Difference between of {expe} {indicator} between eurostat {year} and {model_short_name} '
-            ).add_to(m)
-            hover = folium.features.GeoJson(
-                gdf,
-                style_function=style_function, 
-                control=False,
-                highlight_function=highlight_function, 
-                tooltip=folium.features.GeoJsonTooltip(
-                    fields=['NUTS_NAME', "data", f'{indicator}_{expe}_predicted', "diff_eurostat_llm_normalized", f"{indicator}_{expe}_deviation"],
-                    aliases=["Region: ", f"Eurostat {indicator}: ", f"LLM {expe} predicted: ", "normalized diff: ", f"std deviation for {number_prediction} llm predictions: "],
-                    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
-                )
-            )
-            m.add_child(hover)
-            m.keep_in_front(m)
-            path_save_html = path.replace(f"{data_dir}/", "")
-            path_save_html = path_save_html.replace(f".csv", "")
-            m.save(f'./docs/transformers/others_questions/{indicator}/error_maps_{path_save_html}_nuts_{NUTS_Level}.html')
+if __name__ == "__main__":
+    # MODEL = "Qwen/Qwen2.5-7B-Instruct"  
+    # model_short_name = "Qwen2.5-7B-Instruct"
+    try:
+        parser = argparse.ArgumentParser(description="Load and configure a language model.")
+        parser.add_argument(
+            "--model",
+            type=str,
+            # default="Qwen/Qwen2.5-7B-Instruct",
+            default="meta-llama/Llama-3.1-8B-Instruct",
+            help="Name of the model to load. Default is 'meta-llama/Llama-3.1-8B-Instruct'."
+        )
+        args = parser.parse_args()
+        MODEL = args.model
+    except:
+        # MODEL = "Qwen/Qwen2.5-7B-Instruct"
+        MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+    model_short_name = MODEL.split('/')[-1]  # Extract short name from full model path
 
 
-            # --------------------- #
-            # Error maps by country #
-            # --------------------- #
-            for country in country_list:
-                gdf_copy = gdf.copy()
-                gdf_copy = gdf_copy[gdf_copy["country"] == country]
+    data_dir = "./output/bash"
+    eurostat_data_files = [
+        {
+            "indicator": "income",
+            "path_absolute": f"{data_dir}/income_2017_nuts_llm_{model_short_name}_absolute.csv",
+            "path_relative": f"{data_dir}/income_2017_nuts_llm_{model_short_name}_relative.csv",
+            "complete_year": "2017",
+            "unit": "EUR_HAB"
+        },
+        {
+            "indicator": "pop_density",
+            "path_absolute": f"{data_dir}/pop_density_2018_nuts_llm_{model_short_name}_absolute.csv",
+            "path_relative": f"{data_dir}/pop_density_2018_nuts_llm_{model_short_name}_relative.csv",
+            "complete_year": "2018",
+            "unit": "PER_KM2",
+            "nan": ":", # null value are ":" and not empty cell
+        },
+        {
+            "indicator": "poverty",
+            "path_absolute": f"{data_dir}/poverty_2022_nuts_llm_{model_short_name}_absolute.csv",
+            "path_relative": f"{data_dir}/poverty_2022_nuts_llm_{model_short_name}_relative.csv",
+            "complete_year": "2022",
+            "unit": "PC",
+            "nan": ":"
+        },
+        {
+            "indicator": "age_index",
+            "path_absolute": f"{data_dir}/age_index_2021_nuts_llm_{model_short_name}_absolute.csv",
+            "path_relative": f"{data_dir}/age_index_2021_nuts_llm_{model_short_name}_relative.csv",
+            "complete_year": "2021",
+            "unit": "NR"
+        }
+    ]
+
+    country_list = ['Austria', 'Albania', 'Belgium', 'Bulgaria', 'Switzerland',
+        'Czechia', 'Cyprus', 'Germany', 'Denmark', 'Unknown', 'Estonia',
+        'Spain', 'France', 'Finland', 'Croatia', 'Hungary', 'Italy',
+        'Ireland', 'Norway', 'Netherlands', 'Montenegro',
+        'North Macedonia', 'Lithuania', 'Malta', 'Luxembourg', 'Latvia',
+        'Romania', 'Poland', 'Portugal', 'Serbia', 'Türkiye', 'Sweden',
+        'Slovakia', 'Slovenia']
+    country_list = ['Germany', 'Spain', 'France', 'Italy']
+
+    style_function = lambda x: {'fillColor': '#ffffff', 
+                                'color':'#000000', 
+                                'fillOpacity': 0.1, 
+                                'weight': 0.1}
+    highlight_function = lambda x: {'fillColor': '#000000', 
+                                    'color':'#000000', 
+                                    'fillOpacity': 0.50, 
+                                    'weight': 0.1}
+
+    for eurostat_dict in eurostat_data_files:
+        nuts_level_max = 3
+        for expe in ["relative"]:
+        # for expe in ["absolute", "relative"]:
+            indicator = eurostat_dict["indicator"]
+            path = eurostat_dict[f"path_{expe}"]
+            year = eurostat_dict["complete_year"]
+            if indicator == "poverty":
+                nuts_level_max = 2
+            for NUTS_Level in range(1, nuts_level_max+1):
+
+                df = pd.read_csv(path)
+
+                try :
+                    df['geometry'] = df['geometry'].apply(wkt.loads)
+                except:
+                    print("geometry loading wkt: already done")
+                gdf = gpd.GeoDataFrame(df, geometry='geometry')
+                if gdf.crs is None:
+                    gdf = gdf.set_crs(epsg=3035)  # Ajustez si nécessaire (EPSG initial probable)
+                gdf = gdf.to_crs(epsg=4326)
+
+                gdf = gdf[gdf["LEVL_CODE"] == NUTS_Level]
+                gdf[f'{indicator}_{expe}_predicted'] = gdf[f'{indicator}_{expe}_predicted'].round(0)
                 if expe == "absolute":
-                    gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy['data']
+                    gdf['diff_eurostat_llm'] = ((gdf[f'{indicator}_{expe}_predicted'] - gdf['data'])).round(0)
+                    gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf['data']
                 else:
-                    gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy[f'average_country_indicator']
+                    gdf['diff_eurostat_llm'] = ((gdf[f'{indicator}_{expe}_predicted'] - gdf[f'relative_{indicator}'])).round(0)
+                    gdf['diff_eurostat_llm_normalized'] = abs(gdf['diff_eurostat_llm']) / gdf[f'average_country_indicator']
+                gdf.loc[gdf['diff_eurostat_llm'] > 50000, 'diff_eurostat_llm'] = np.nan
 
-                gdf_copy_json = gdf_copy.to_crs(epsg=4326).to_json()
+                
+
+                gdf[f"{indicator}_{expe}_deviation"] = gdf[f"{indicator}_{expe}_deviation"].round(0)
+
+                gdf_json = gdf.to_crs(epsg=4326).to_json()
+
+                # ---------- #
+                # Error maps #
+                # ---------- #
                 m = folium.Map(location=[50, 20], zoom_start=5)
                 folium.Choropleth(
-                    geo_data=gdf_copy_json,
-                    data=gdf_copy,
+                    geo_data=gdf_json,
+                    data=gdf,  
                     columns=['NUTS_ID', 'diff_eurostat_llm_normalized'], 
-                    key_on='feature.properties.NUTS_ID',
-                    fill_color='RdYlGn_r',
+                    key_on='feature.properties.NUTS_ID',  
+                    fill_color='RdYlGn_r', 
                     fill_opacity=0.7,
                     line_opacity=0.2,
-                    legend_name=f'Difference between {expe} {indicator} eurostat {year} and {model_short_name}'
+                    legend_name=f'Difference between of {expe} {indicator} between eurostat {year} and {model_short_name} '
+                ).add_to(m)
+                hover = folium.features.GeoJson(
+                    gdf,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['NUTS_NAME', "data", f'{indicator}_{expe}_predicted', "diff_eurostat_llm_normalized", f"{indicator}_{expe}_deviation"],
+                        aliases=["Region: ", f"Eurostat {indicator}: ", f"LLM {expe} predicted: ", "normalized diff: ", f"std deviation for {number_prediction} llm predictions: "],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                m.add_child(hover)
+                m.keep_in_front(m)
+                path_save_html = path.replace(f"{data_dir}/", "")
+                path_save_html = path_save_html.replace(f".csv", "")
+                m.save(f'./docs/transformers/others_questions/{indicator}/error_maps_{path_save_html}_nuts_{NUTS_Level}.html')
+
+
+                # --------------------- #
+                # Error maps by country #
+                # --------------------- #
+                for country in country_list:
+                    gdf_copy = gdf.copy()
+                    gdf_copy = gdf_copy[gdf_copy["country"] == country]
+                    if expe == "absolute":
+                        gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy['data']
+                    else:
+                        gdf_copy['diff_eurostat_llm_normalized'] = abs(gdf_copy['diff_eurostat_llm']) / gdf_copy[f'average_country_indicator']
+
+                    gdf_copy_json = gdf_copy.to_crs(epsg=4326).to_json()
+                    m = folium.Map(location=[50, 20], zoom_start=5)
+                    folium.Choropleth(
+                        geo_data=gdf_copy_json,
+                        data=gdf_copy,
+                        columns=['NUTS_ID', 'diff_eurostat_llm_normalized'], 
+                        key_on='feature.properties.NUTS_ID',
+                        fill_color='RdYlGn_r',
+                        fill_opacity=0.7,
+                        line_opacity=0.2,
+                        legend_name=f'Difference between {expe} {indicator} eurostat {year} and {model_short_name}'
+                    ).add_to(m)
+                    hover = folium.features.GeoJson(
+                        gdf,
+                        style_function=style_function, 
+                        control=False,
+                        highlight_function=highlight_function, 
+                        tooltip=folium.features.GeoJsonTooltip(
+                            fields=['NUTS_NAME', str(year), f'{indicator}_{expe}_predicted', "diff_eurostat_llm_normalized", f"{indicator}_{expe}_deviation"],
+                            aliases=["Region: ", f"Eurostat {indicator}: ", f"LLM {expe} predicted: ", "normalized diff: ", f"std deviation for {number_prediction} llm predictions: "],
+                            style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                        )
+                    )
+                    m.add_child(hover)
+                    m.keep_in_front(m)
+                    m.save(f'./docs/transformers/others_questions/{indicator}/error_maps_{path_save_html}_nuts_{NUTS_Level}_{country}.html')
+
+
+                # ------------------- #
+                # pearson correlation #
+                # ------------------- #
+                correlation_results = []
+                for country, group in gdf.groupby('country'):
+                    if group['diff_eurostat_llm_normalized'].notna().any() and group[f"{indicator}_{expe}_logprobs"].notna().any():
+                        try:
+                            corr, _ = pearsonr(
+                                group['diff_eurostat_llm_normalized'].dropna(),
+                                group[f"{indicator}_{expe}_logprobs"].dropna()
+                            )
+                            correlation_results.append({
+                                'Country': country,
+                                'Correlation': corr,
+                                f'{indicator}': group["data"].dropna().values[0]
+                            })
+                        except:
+                            print(f"error with {country}")
+
+                corr_df = pd.DataFrame(correlation_results)
+                corr_df_sorted = corr_df.sort_values(by=f'{indicator}', ascending=False)
+                gdp_min = corr_df_sorted[f'{indicator}'].min()
+                gdp_max = corr_df_sorted[f'{indicator}'].max()
+                gdp_range_text = f"{indicator} Range: {gdp_min} - {gdp_max}"
+
+                fig = px.bar(
+                    corr_df_sorted,
+                    x='Country',
+                    y='Correlation',
+                    color='Correlation',
+                    hover_data={f'{indicator}': True},
+                    color_continuous_scale=["red", "yellow", "green"],
+                    title=f'Pearson Correlation between Absolute predict {expe} {indicator} error vs Logprobs - by Country Ordered by Eurostat {indicator}',
+                    labels={'Correlation': 'correlation', f'Country ordered by average {indicator}': 'Country'},
+                    template='plotly_white'
+                )
+                fig.write_html(f'./docs/transformers/others_questions/{indicator}/pearson_correlation_{path_save_html}_nuts_{NUTS_Level}.html')
+
+                # ------------------- #
+                #   Map of Logprobs   #
+                # ------------------- #
+                m = folium.Map(location=[50, 20], zoom_start=5)
+                folium.Choropleth(
+                    geo_data=gdf_json,
+                    data=gdf,  
+                    columns=['NUTS_ID', f'{indicator}_{expe}_logprobs'], 
+                    key_on='feature.properties.NUTS_ID',  
+                    fill_color='RdYlGn', 
+                    fill_opacity=0.7,
+                    line_opacity=0.2,
+                    legend_name=f'Avergage logprobs for {expe} {indicator} prediction'
                 ).add_to(m)
                 hover = folium.features.GeoJson(
                     gdf,
@@ -444,166 +532,98 @@ for eurostat_dict in eurostat_data_files:
                     highlight_function=highlight_function, 
                     tooltip=folium.features.GeoJsonTooltip(
                         fields=['NUTS_NAME', str(year), f'{indicator}_{expe}_predicted', "diff_eurostat_llm_normalized", f"{indicator}_{expe}_deviation"],
-                        aliases=["Region: ", f"Eurostat {indicator}: ", f"LLM {expe} predicted: ", "normalized diff: ", f"std deviation for {number_prediction} llm predictions: "],
+                        aliases=["Region: ", f"Eurostat {expe} {indicator}: ", "LLM predicted: ", "normalized diff: ", f"std deviation for {number_prediction} llm predictions: "],
                         style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
                     )
                 )
                 m.add_child(hover)
                 m.keep_in_front(m)
-                m.save(f'./docs/transformers/others_questions/{indicator}/error_maps_{path_save_html}_nuts_{NUTS_Level}_{country}.html')
+                m.save(f'./docs/transformers/others_questions/{indicator}/average_logprobs_{path_save_html}_nuts_{NUTS_Level}.html')
 
-
-            # ------------------- #
-            # pearson correlation #
-            # ------------------- #
-            correlation_results = []
-            for country, group in gdf.groupby('country'):
-                if group['diff_eurostat_llm_normalized'].notna().any() and group[f"{indicator}_{expe}_logprobs"].notna().any():
-                    try:
-                        corr, _ = pearsonr(
-                            group['diff_eurostat_llm_normalized'].dropna(),
-                            group[f"{indicator}_{expe}_logprobs"].dropna()
-                        )
-                        correlation_results.append({
-                            'Country': country,
-                            'Correlation': corr,
-                            f'{indicator}': group["data"].dropna().values[0]
-                        })
-                    except:
-                        print(f"error with {country}")
-
-            corr_df = pd.DataFrame(correlation_results)
-            corr_df_sorted = corr_df.sort_values(by=f'{indicator}', ascending=False)
-            gdp_min = corr_df_sorted[f'{indicator}'].min()
-            gdp_max = corr_df_sorted[f'{indicator}'].max()
-            gdp_range_text = f"{indicator} Range: {gdp_min} - {gdp_max}"
-
-            fig = px.bar(
-                corr_df_sorted,
-                x='Country',
-                y='Correlation',
-                color='Correlation',
-                hover_data={f'{indicator}': True},
-                color_continuous_scale=["red", "yellow", "green"],
-                title=f'Pearson Correlation between Absolute predict {expe} {indicator} error vs Logprobs - by Country Ordered by Eurostat {indicator}',
-                labels={'Correlation': 'correlation', f'Country ordered by average {indicator}': 'Country'},
-                template='plotly_white'
-            )
-            fig.write_html(f'./docs/transformers/others_questions/{indicator}/pearson_correlation_{path_save_html}_nuts_{NUTS_Level}.html')
-
-            # ------------------- #
-            #   Map of Logprobs   #
-            # ------------------- #
-            m = folium.Map(location=[50, 20], zoom_start=5)
-            folium.Choropleth(
-                geo_data=gdf_json,
-                data=gdf,  
-                columns=['NUTS_ID', f'{indicator}_{expe}_logprobs'], 
-                key_on='feature.properties.NUTS_ID',  
-                fill_color='RdYlGn', 
-                fill_opacity=0.7,
-                line_opacity=0.2,
-                legend_name=f'Avergage logprobs for {expe} {indicator} prediction'
-            ).add_to(m)
-            hover = folium.features.GeoJson(
-                gdf,
-                style_function=style_function, 
-                control=False,
-                highlight_function=highlight_function, 
-                tooltip=folium.features.GeoJsonTooltip(
-                    fields=['NUTS_NAME', str(year), f'{indicator}_{expe}_predicted', "diff_eurostat_llm_normalized", f"{indicator}_{expe}_deviation"],
-                    aliases=["Region: ", f"Eurostat {expe} {indicator}: ", "LLM predicted: ", "normalized diff: ", f"std deviation for {number_prediction} llm predictions: "],
-                    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                # ------------------- #
+                # Barplot of Logprobs #
+                # ------------------- #
+                gdf_long = gdf.melt(
+                    id_vars=['country', 'data'], 
+                    value_vars=['diff_eurostat_llm_normalized', f'{indicator}_{expe}_logprobs'], 
+                    var_name='Metric', 
+                    value_name='Value'
                 )
-            )
-            m.add_child(hover)
-            m.keep_in_front(m)
-            m.save(f'./docs/transformers/others_questions/{indicator}/average_logprobs_{path_save_html}_nuts_{NUTS_Level}.html')
+                gdf_long = pd.merge(
+                    gdf_long, 
+                    gdf[['country', 'NUTS_NAME']],  # Keep only necessary columns for the merge
+                    on='country',
+                    how='left'
+                )
+                gdf_long = gdf_long.sort_values(by='data', ascending=False)
+                fig = px.bar(
+                    gdf_long,
+                    x='country',
+                    y='Value',
+                    color='Metric',
+                    barmode='group',  # Ensures bars are grouped side by side
+                    # text='Value',  # Adds value annotations
+                    title='Diff Income with logprobs',
+                    color_discrete_map={
+                        'diff_eurostat_llm_normalized': 'yellow', 
+                        f'{indicator}_{expe}_logprobs': 'cyan'
+                    },
+                    template='plotly_white',
+                    hover_data={'NUTS_NAME': True, 'data': True}
+                )
+                fig.update_layout(
+                    xaxis_title='Country',
+                    yaxis_title='Value',
+                    legend_title='Metric',
+                    title_font_size=20,
+                )
+                fig.write_html(f'./docs/transformers/others_questions/{indicator}/barplot_logprobs_{path_save_html}_nuts_{NUTS_Level}.html')
 
-            # ------------------- #
-            # Barplot of Logprobs #
-            # ------------------- #
-            gdf_long = gdf.melt(
-                id_vars=['country', 'data'], 
-                value_vars=['diff_eurostat_llm_normalized', f'{indicator}_{expe}_logprobs'], 
-                var_name='Metric', 
-                value_name='Value'
-            )
-            gdf_long = pd.merge(
-                gdf_long, 
-                gdf[['country', 'NUTS_NAME']],  # Keep only necessary columns for the merge
-                on='country',
-                how='left'
-            )
-            gdf_long = gdf_long.sort_values(by='data', ascending=False)
-            fig = px.bar(
-                gdf_long,
-                x='country',
-                y='Value',
-                color='Metric',
-                barmode='group',  # Ensures bars are grouped side by side
-                # text='Value',  # Adds value annotations
-                title='Diff Income with logprobs',
-                color_discrete_map={
-                    'diff_eurostat_llm_normalized': 'yellow', 
-                    f'{indicator}_{expe}_logprobs': 'cyan'
-                },
-                template='plotly_white',
-                hover_data={'NUTS_NAME': True, 'data': True}
-            )
-            fig.update_layout(
-                xaxis_title='Country',
-                yaxis_title='Value',
-                legend_title='Metric',
-                title_font_size=20,
-            )
-            fig.write_html(f'./docs/transformers/others_questions/{indicator}/barplot_logprobs_{path_save_html}_nuts_{NUTS_Level}.html')
+                # ------------------- #
+                # Bivariate map       #
+                # ------------------- #
+                color_sets = {
+                    'pink-blue':   ['#e8e8e8', '#ace4e4', '#5ac8c8', '#dfb0d6', '#a5add3', '#5698b9', '#be64ac', '#8c62aa', '#3b4994'],
+                    'blue-pink': ['#3b4994', '#8c62aa', '#be64ac', '#5698b9', '#a5add3', '#dfb0d6', '#5ac8c8', '#ace4e4', '#e8e8e8'],
+                    'teal-red':    ['#e8e8e8', '#e4acac', '#c85a5a', '#b0d5df', '#ad9ea5', '#985356', '#64acbe', '#627f8c', '#574249'],
+                    'red-teal': ['#574249', '#627f8c', '#64acbe', '#985356', '#ad9ea5', '#b0d5df', '#c85a5a', '#e4acac', '#e8e8e8'],
+                    'blue-organe': ['#fef1e4', '#fab186', '#f3742d',  '#97d0e7', '#b0988c', '#ab5f37', '#18aee5', '#407b8f', '#5c473d']
+                }
 
-            # ------------------- #
-            # Bivariate map       #
-            # ------------------- #
-            color_sets = {
-                'pink-blue':   ['#e8e8e8', '#ace4e4', '#5ac8c8', '#dfb0d6', '#a5add3', '#5698b9', '#be64ac', '#8c62aa', '#3b4994'],
-                'blue-pink': ['#3b4994', '#8c62aa', '#be64ac', '#5698b9', '#a5add3', '#dfb0d6', '#5ac8c8', '#ace4e4', '#e8e8e8'],
-                'teal-red':    ['#e8e8e8', '#e4acac', '#c85a5a', '#b0d5df', '#ad9ea5', '#985356', '#64acbe', '#627f8c', '#574249'],
-                'red-teal': ['#574249', '#627f8c', '#64acbe', '#985356', '#ad9ea5', '#b0d5df', '#c85a5a', '#e4acac', '#e8e8e8'],
-                'blue-organe': ['#fef1e4', '#fab186', '#f3742d',  '#97d0e7', '#b0988c', '#ab5f37', '#18aee5', '#407b8f', '#5c473d']
-            }
+                gdf_copy = gdf.copy()
+                gdf_copy["prediction"] = gdf_copy[f"{indicator}_{expe}_predicted"]
+                gdf_copy["error"] = abs(gdf_copy["prediction"] - gdf_copy[f"{expe}_{indicator}"] / gdf_copy[f"{expe}_{indicator}"])
+                gdf_copy["logprobs"] = gdf_copy[f"{indicator}_{expe}_logprobs"]
+                gdf_copy["logprobs"] = gdf_copy["logprobs"] * (-1)
+                gdf_copy = gdf_copy.dropna(subset=["error"])
+                # Define URL of the GeoJSON file for boundaries
+                geojson_url = 'https://github.com/yotkadata/covid-waves/raw/main/data/NUTS_RG_10M_2016_4326.geojson'
+                geojson = load_geojson(geojson_url)
 
-            gdf_copy = gdf.copy()
-            gdf_copy["prediction"] = gdf_copy[f"{indicator}_{expe}_predicted"]
-            gdf_copy["error"] = abs(gdf_copy["prediction"] - gdf_copy[f"{expe}_{indicator}"] / gdf_copy[f"{expe}_{indicator}"])
-            gdf_copy["logprobs"] = gdf_copy[f"{indicator}_{expe}_logprobs"]
-            gdf_copy["logprobs"] = gdf_copy["logprobs"] * (-1)
-            gdf_copy = gdf_copy.dropna(subset=["error"])
-            # Define URL of the GeoJSON file for boundaries
-            geojson_url = 'https://github.com/yotkadata/covid-waves/raw/main/data/NUTS_RG_10M_2016_4326.geojson'
-            geojson = load_geojson(geojson_url)
+                # Prepare bivariate map metadata
+                conf = conf_defaults()
+                conf['plot_title'] = f'Bivariate map between LLM prediction ({model_short_name}) Error prediction for {expe} {indicator} AND its confidence (logprobs * (-1))'
+                conf['hover_x_label'] = f'error'  # Label to appear on hover
+                conf['hover_y_label'] = 'Logprob'  # Label to appear on hover
+                conf['width'] = 1000
+                conf['center_lat'] = 48  # Latitude of the center of the map
+                conf['center_lon'] = 9  # Longitude of the center of the map
+                conf['map_zoom'] = 3.7  # Zoom factor of the map
+                conf['borders_width'] = 0  # Width of the geographic entity borders
+                conf['top'] = 0.5  # Vertical position of the top right corner (0: bottom, 1: top)
+                conf['right'] = 0.1  # Horizontal position of the top right corner (0: left, 1: right)
+                conf['line_width'] = 0  # Width of the rectagles' borders
+                conf['legend_x_label'] = f'Higher error'  # x variable label for the legend
+                conf['legend_y_label'] = 'Smaller confidence'  # y variable label for the legend
 
-            # Prepare bivariate map metadata
-            conf = conf_defaults()
-            conf['plot_title'] = f'Bivariate map between LLM prediction ({model_short_name}) Error prediction for {expe} {indicator} AND its confidence (logprobs * (-1))'
-            conf['hover_x_label'] = f'error'  # Label to appear on hover
-            conf['hover_y_label'] = 'Logprob'  # Label to appear on hover
-            conf['width'] = 1000
-            conf['center_lat'] = 48  # Latitude of the center of the map
-            conf['center_lon'] = 9  # Longitude of the center of the map
-            conf['map_zoom'] = 3.7  # Zoom factor of the map
-            conf['borders_width'] = 0  # Width of the geographic entity borders
-            conf['top'] = 0.5  # Vertical position of the top right corner (0: bottom, 1: top)
-            conf['right'] = 0.1  # Horizontal position of the top right corner (0: left, 1: right)
-            conf['line_width'] = 0  # Width of the rectagles' borders
-            conf['legend_x_label'] = f'Higher error'  # x variable label for the legend
-            conf['legend_y_label'] = 'Smaller confidence'  # y variable label for the legend
-
-            fig = create_bivariate_map(gdf_copy, color_sets['teal-red'], geojson, x='error', y='logprobs', ids='NUTS_ID', name='NUTS_NAME', conf=conf)
-            fig.update_layout(
-                mapbox_layers = [{
-                    'source': geojson,
-                    'type': 'line',
-                    'line': {'width': 0.5}
-                },],
-            )
-            fig.write_html(f'./docs/transformers/others_questions/{indicator}/bivariate_maps_{path_save_html}_nuts_{NUTS_Level}.html')
+                fig = create_bivariate_map(gdf_copy, color_sets['teal-red'], geojson, x='error', y='logprobs', ids='NUTS_ID', name='NUTS_NAME', conf=conf)
+                fig.update_layout(
+                    mapbox_layers = [{
+                        'source': geojson,
+                        'type': 'line',
+                        'line': {'width': 0.5}
+                    },],
+                )
+                fig.write_html(f'./docs/transformers/others_questions/{indicator}/bivariate_maps_{path_save_html}_nuts_{NUTS_Level}.html')
 
 
