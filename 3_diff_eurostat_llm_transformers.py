@@ -132,8 +132,8 @@ def prepare_df(df, x='x', y='y'):
     y_breaks = np.percentile(df[y], [33, 66])
 
     # print(f"x_breaks: {x_breaks} | not normalize: {x_breaks * (df[x].max() - df[x].min()) + df[x].min()}")
-    print(f"x_breaks: {x_breaks}")
-    print(f"y_breaks: {y_breaks}")
+    # print(f"x_breaks: {x_breaks}")
+    # print(f"y_breaks: {y_breaks}")
 
     # Assign values of both variables to one of three bins (0, 1, 2)
     x_bins = [set_interval_value(value_x, x_breaks[0], x_breaks[1]) for value_x in df[x]]
@@ -366,16 +366,20 @@ if __name__ == "__main__":
 
     for eurostat_dict in eurostat_data_files:
         nuts_level_max = 3
-        for expe in ["relative"]:
-        # for expe in ["absolute", "relative"]:
+        # for expe in ["relative"]:
+        for expe in ["absolute", "relative"]:
             indicator = eurostat_dict["indicator"]
             path = eurostat_dict[f"path_{expe}"]
             year = eurostat_dict["complete_year"]
             if indicator == "poverty":
                 nuts_level_max = 2
             for NUTS_Level in range(1, nuts_level_max+1):
-
-                df = pd.read_csv(path)
+                print(f"Started: {expe} for {indicator} at NUTS {NUTS_Level} with {model_short_name}")
+                try: 
+                    df = pd.read_csv(path)
+                except:
+                    print(f"\t❌ No file: {path}. Expe is Skipped !!")
+                    continue
 
                 try :
                     df['geometry'] = df['geometry'].apply(wkt.loads)
@@ -432,6 +436,7 @@ if __name__ == "__main__":
                 path_save_html = path.replace(f"{data_dir}/", "")
                 path_save_html = path_save_html.replace(f".csv", "")
                 m.save(f'./docs/transformers/others_questions/{indicator}/error_maps_{path_save_html}_nuts_{NUTS_Level}.html')
+                print("\t Error maps: ✅")
 
 
                 # --------------------- #
@@ -471,12 +476,14 @@ if __name__ == "__main__":
                     m.add_child(hover)
                     m.keep_in_front(m)
                     m.save(f'./docs/transformers/others_questions/{indicator}/error_maps_{path_save_html}_nuts_{NUTS_Level}_{country}.html')
+                print("\t Error maps by countries: ✅")
 
 
                 # ------------------- #
                 # pearson correlation #
                 # ------------------- #
                 correlation_results = []
+                country_failed_list = []
                 for country, group in gdf.groupby('country'):
                     if group['diff_eurostat_llm_normalized'].notna().any() and group[f"{indicator}_{expe}_logprobs"].notna().any():
                         try:
@@ -490,7 +497,8 @@ if __name__ == "__main__":
                                 f'{indicator}': group["data"].dropna().values[0]
                             })
                         except:
-                            print(f"error with {country}")
+                            # print(f"error with {country}")
+                            country_failed_list.append(country)
 
                 corr_df = pd.DataFrame(correlation_results)
                 corr_df_sorted = corr_df.sort_values(by=f'{indicator}', ascending=False)
@@ -510,6 +518,7 @@ if __name__ == "__main__":
                     template='plotly_white'
                 )
                 fig.write_html(f'./docs/transformers/others_questions/{indicator}/pearson_correlation_{path_save_html}_nuts_{NUTS_Level}.html')
+                print(f"\t Pearson correlation: ✅ (except for: {country_failed_list})")
 
                 # ------------------- #
                 #   Map of Logprobs   #
@@ -539,6 +548,8 @@ if __name__ == "__main__":
                 m.add_child(hover)
                 m.keep_in_front(m)
                 m.save(f'./docs/transformers/others_questions/{indicator}/average_logprobs_{path_save_html}_nuts_{NUTS_Level}.html')
+                print("\t Logprob maps: ✅")
+
 
                 # ------------------- #
                 # Barplot of Logprobs #
@@ -578,6 +589,8 @@ if __name__ == "__main__":
                     title_font_size=20,
                 )
                 fig.write_html(f'./docs/transformers/others_questions/{indicator}/barplot_logprobs_{path_save_html}_nuts_{NUTS_Level}.html')
+                print("\t Barplots for logprob: ✅")
+
 
                 # ------------------- #
                 # Bivariate map       #
@@ -592,7 +605,7 @@ if __name__ == "__main__":
 
                 gdf_copy = gdf.copy()
                 gdf_copy["prediction"] = gdf_copy[f"{indicator}_{expe}_predicted"]
-                gdf_copy["error"] = abs(gdf_copy["prediction"] - gdf_copy[f"{expe}_{indicator}"] / gdf_copy[f"{expe}_{indicator}"])
+                gdf_copy["error"] = abs(gdf_copy["prediction"] - gdf_copy[f"data"] / gdf_copy[f"data"])
                 gdf_copy["logprobs"] = gdf_copy[f"{indicator}_{expe}_logprobs"]
                 gdf_copy["logprobs"] = gdf_copy["logprobs"] * (-1)
                 gdf_copy = gdf_copy.dropna(subset=["error"])
@@ -625,5 +638,7 @@ if __name__ == "__main__":
                     },],
                 )
                 fig.write_html(f'./docs/transformers/others_questions/{indicator}/bivariate_maps_{path_save_html}_nuts_{NUTS_Level}.html')
+                print("\t Bivariate maps: ✅")
+
 
 
