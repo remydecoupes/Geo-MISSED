@@ -44,10 +44,19 @@ You have to donwload the data files into data folder
 
 **Reproduce the study**:
 ```bash
+# Eurostat data pre-processing
 python 1_eurostat_preprocessing.py
+
+# Inferring with LLMs
 chmod u+x 2_run_all_transformers_models.sh
 ./2_run_all_transformers_models.sh
-python 3_diff_eurostat_llm_transformers.py
+
+# Compute error and normalized error
+chmod u+X 3_run_all_transformers_models.sh
+./3_run_all_transformers_models.sh
+
+# post-processing the results
+# 
 ```
 
 
