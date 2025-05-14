@@ -4,6 +4,7 @@ from collections import defaultdict
 
 base_dir = "docs/transformers/others_questions"
 output_path = os.path.join("docs/", "index.html")
+avoid_nuts_level = ['3']
 
 html = [
     "<!DOCTYPE html>",
@@ -106,11 +107,15 @@ for category in sorted(os.listdir(base_dir)):
         mode_match = re.search(r"_(absolute|relative)", filename)
         nuts_match = re.search(r"nuts_(\d)", filename)
 
+
         if model_match and graph_match and mode_match and nuts_match:
             model = model_match.group(1)
             graph = graph_match.group(1)
             mode = mode_match.group(1)
             nuts_level = nuts_match.group(1)
+
+            if nuts_level in avoid_nuts_level:
+                continue
 
             # Optional: get country if present
             country_match = re.search(r"_(France|Germany|Italy|Spain)", filename)
