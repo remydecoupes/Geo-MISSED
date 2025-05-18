@@ -4,7 +4,7 @@ from collections import defaultdict
 
 base_dir = "docs/transformers/others_questions"
 output_path = os.path.join("docs/", "index.html")
-avoid_nuts_level = ['3']
+avoid_nuts_level = ["1",'3']
 
 html = [
     "<!DOCTYPE html>",

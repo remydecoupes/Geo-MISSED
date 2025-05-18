@@ -300,15 +300,16 @@ if __name__ == "__main__":
         parser.add_argument(
             "--model",
             type=str,
-            # default="Qwen/Qwen2.5-7B-Instruct",
-            default="meta-llama/Llama-3.1-8B-Instruct",
+            default="Qwen/Qwen2.5-72B-Instruct",
+            # default="meta-llama/Llama-3.1-8B-Instruct",
             help="Name of the model to load. Default is 'meta-llama/Llama-3.1-8B-Instruct'."
         )
         args = parser.parse_args()
         MODEL = args.model
     except:
         # MODEL = "Qwen/Qwen2.5-7B-Instruct"
-        MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+        # MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+        MODEL = "Qwen/Qwen2.5-72B-Instruct"
     model_short_name = MODEL.split('/')[-1]  # Extract short name from full model path
 
 
