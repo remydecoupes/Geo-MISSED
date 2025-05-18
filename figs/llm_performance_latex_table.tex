@@ -1,0 +1,29 @@
+\begin{table}[htbp]
+\centering
+\caption{LLM performance grouped by category and model family}
+\label{tab:llm_perf_grouped}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l|cccccccccc}
+\toprule
+\midrule
+ & Category & Metric & \multicolumn{3}{c}{Qwen2.5} & \multicolumn{2}{c}{Mistral} & \multicolumn{2}{c}{Llama-3.1} & Total \\
+ &  &  & 7B & 14B & 32B & 7B & 24B & 8B & 70B & Total \\
+\midrule
+0 & Total & Logprobs & -0.151 & -0.115 & \textbf{-0.081} & -0.300 & -0.559 & \textit{-0.651} & -0.629 & -0.355 \\
+1 & Total & Normalized Error & 0.670000 & 0.529000 & 0.430000 & 0.517000 & 0.355000 & 0.475000 & 0.265000 & 0.463000 \\
+2 & Age Index & Error & -0.930000 & -3.261000 & 0.985000 & -0.374000 & -0.445000 & -14.423000 & 2.658000 & -2.256000 \\
+3 & Age Index & Logprobs & -0.230 & -0.168 & \textbf{-0.084} & -0.305 & -0.538 & -0.587 & \textit{-0.687} & -0.371 \\
+4 & Age Index & Normalized Error & 0.523000 & 0.231000 & 0.247000 & 0.184000 & 0.176000 & 0.393000 & 0.171000 & 0.275000 \\
+5 & Income & Error & 1102.774000 & -874.551000 & -0.619000 & 3056.702000 & -1706.707000 & -3192.878000 & -3544.902000 & -737.169000 \\
+6 & Income & Logprobs & -0.072 & -0.036 & \textbf{-0.032} & -0.181 & -0.369 & -0.478 & \textit{-0.567} & -0.248 \\
+7 & Income & Normalized Error & 0.397000 & 0.389000 & 0.321000 & 0.388000 & 0.262000 & 0.348000 & 0.216000 & 0.332000 \\
+8 & Pop Density & Error & -13.862000 & 200.440000 & 142.925000 & 100.318000 & 47.302000 & 45.470000 & -40.909000 & 68.812000 \\
+9 & Pop Density & Logprobs & -0.162 & -0.145 & \textbf{-0.135} & -0.438 & -0.774 & \textit{-0.882} & -0.682 & -0.460 \\
+10 & Pop Density & Normalized Error & 1.135000 & 0.952000 & 0.736000 & 0.888000 & 0.629000 & 0.689000 & 0.392000 & 0.774000 \\
+11 & Poverty & Error & 1.134000 & 0.569000 & -0.807000 & 9.396000 & -1.106000 & -8.375000 & -3.749000 & -0.420000 \\
+12 & Poverty & Logprobs & -0.137 & -0.128 & \textbf{-0.037} & -0.158 & -0.539 & \textit{-0.679} & -0.409 & -0.298 \\
+13 & Poverty & Normalized Error & 0.432000 & 0.498000 & 0.286000 & 0.832000 & 0.257000 & 0.421000 & 0.309000 & 0.434000 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

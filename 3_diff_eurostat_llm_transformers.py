@@ -654,7 +654,7 @@ if __name__ == "__main__":
                     fig.write_html(f'./docs/transformers/others_questions/{indicator}/bivariate_maps_{path_save_html}_nuts_{NUTS_Level}.html')
                     print("\t Bivariate maps: ✅")
                 
-    concatenated_df.to_csv("output/bash/concatenated_results.csv")
+    concatenated_df.to_csv(f"output/bash/concatenated_reports/{model_short_name}.csv")
 
 
 
