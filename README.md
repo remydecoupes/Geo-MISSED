@@ -58,6 +58,12 @@ chmod u+X 3_run_all_transformers_models.sh
 # post-processing the results with jupyter or jupyter-lab:
 4_synthized_results.ipynb
 ```
+-------
+## Some visualisation from this repository
+
+| Bar Plot Error with range of prediction                       | Scatter Plot: Confidence vs Error                  | Bivariate Map                                  |
+|--------------------------------------------------------|---------------------------------------------------|------------------------------------------------|
+| ![](figs/barplot_error_with_deviation.png)             | ![](figs/scatter_plot_global_picture.png)         | ![](figs/bivariate_llama-70B_poverty.png)      |
 
 
 -------
