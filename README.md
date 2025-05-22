@@ -55,8 +55,8 @@ chmod u+x 2_run_all_transformers_models.sh
 chmod u+X 3_run_all_transformers_models.sh
 ./3_run_all_transformers_models.sh
 
-# post-processing the results
-# 
+# post-processing the results with jupyter or jupyter-lab:
+4_synthized_results.ipynb
 ```
 
 
