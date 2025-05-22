@@ -300,7 +300,7 @@ if __name__ == "__main__":
         parser.add_argument(
             "--model",
             type=str,
-            default="Qwen/Qwen2.5-72B-Instruct",
+            default="meta-llama/Llama-3.1-70B-Instruct",
             # default="meta-llama/Llama-3.1-8B-Instruct",
             help="Name of the model to load. Default is 'meta-llama/Llama-3.1-8B-Instruct'."
         )
@@ -407,7 +407,7 @@ if __name__ == "__main__":
 
                 df_to_be_contatenated = gdf.drop(columns=['Unnamed: 0.1', 'Unnamed: 0', 'CNTR_CODE', 'NUTS_ID', 'unit', 'data', 
                                                           year, 'geometry', 'average_country_indicator',f'relative_{indicator}', 
-                                                          f'{indicator}_{expe}_deviation', f'{indicator}_{expe}_logprobs_deviation'])
+                                                          ])
                 df_to_be_contatenated["indicator"] = f'{indicator}'
                 df_to_be_contatenated["expe"] = f'{expe}'
                 df_to_be_contatenated["model"] = f'{model_short_name}'
@@ -415,9 +415,16 @@ if __name__ == "__main__":
                     f'{indicator}_{expe}_predicted': 'predicted',
                     f'{indicator}_{expe}_logprobs': 'logprobs',
                     'diff_eurostat_llm': 'error',
-                    'diff_eurostat_llm_normalized': 'normalized_error'
+                    'diff_eurostat_llm_normalized': 'normalized_error',
+                    f'{indicator}_{expe}_deviation': "error_deviation",
+                    f'{indicator}_{expe}_logprobs_deviation': "logprobs_deviation"
                 })
+                df_to_be_contatenated["normalized_error_deviation"] = abs(df_to_be_contatenated["error_deviation"] / gdf[f'average_country_indicator'])
+                df_to_be_contatenated = df_to_be_contatenated.drop(
+                    columns=[col for col in df_to_be_contatenated.columns if f"{indicator}_{expe}" in col])
                 concatenated_df = pd.concat([df_to_be_contatenated, concatenated_df], ignore_index=True)
+
+                # print(concatenated_df.head(2))
 
                 generate_maps = False
                 if generate_maps:
@@ -619,11 +626,14 @@ if __name__ == "__main__":
                     }
 
                     gdf_copy = gdf.copy()
-                    gdf_copy["prediction"] = gdf_copy[f"{indicator}_{expe}_predicted"]
-                    gdf_copy["error"] = abs(gdf_copy["prediction"] - gdf_copy[f"data"] / gdf_copy[f"data"])
+                    # gdf_copy["prediction"] = gdf_copy[f"{indicator}_{expe}_predicted"]
+                    # gdf_copy["error"] = abs(gdf_copy["prediction"] - gdf_copy[f"data"] / gdf_copy[f"data"])
+                    # diff_eurostat_llm_normalized
+                    gdf_copy["Normalized error"] = gdf_copy["diff_eurostat_llm_normalized"]
                     gdf_copy["logprobs"] = gdf_copy[f"{indicator}_{expe}_logprobs"]
-                    gdf_copy["logprobs"] = gdf_copy["logprobs"] * (-1)
-                    gdf_copy = gdf_copy.dropna(subset=["error"])
+                    # gdf_copy["logprobs"] = gdf_copy["logprobs"] * (-1)
+                    #gdf_copy = gdf_copy.dropna(subset=["error"])
+                    gdf_copy = gdf_copy.dropna(subset=["Normalized error"])
                     # Define URL of the GeoJSON file for boundaries
                     geojson_url = 'https://github.com/yotkadata/covid-waves/raw/main/data/NUTS_RG_10M_2016_4326.geojson'
                     geojson = load_geojson(geojson_url)
@@ -642,20 +652,21 @@ if __name__ == "__main__":
                     conf['right'] = 0.1  # Horizontal position of the top right corner (0: left, 1: right)
                     conf['line_width'] = 0  # Width of the rectagles' borders
                     conf['legend_x_label'] = f'Higher error'  # x variable label for the legend
-                    conf['legend_y_label'] = 'Smaller confidence'  # y variable label for the legend
+                    conf['legend_y_label'] = 'Higher confidence'  # y variable label for the legend
 
-                    fig = create_bivariate_map(gdf_copy, color_sets['teal-red'], geojson, x='error', y='logprobs', ids='NUTS_ID', name='NUTS_NAME', conf=conf)
-                    fig.update_layout(
-                        mapbox_layers = [{
-                            'source': geojson,
-                            'type': 'line',
-                            'line': {'width': 0.5}
-                        },],
-                    )
+                    fig = create_bivariate_map(gdf_copy, color_sets['teal-red'], geojson, x='Normalized error', y='logprobs', ids='NUTS_ID', name='NUTS_NAME', conf=conf)
+                    # fig.update_layout(
+                    #     mapbox_layers = [{
+                    #         'source': geojson,
+                    #         'type': 'line',
+                    #         'line': {'width': 0.5}
+                    #     },],
+                    # )
                     fig.write_html(f'./docs/transformers/others_questions/{indicator}/bivariate_maps_{path_save_html}_nuts_{NUTS_Level}.html')
                     print("\t Bivariate maps: ✅")
                 
     concatenated_df.to_csv(f"output/bash/concatenated_reports/{model_short_name}.csv")
+    print(concatenated_df)
 
 
 
