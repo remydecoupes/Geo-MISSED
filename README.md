@@ -1,18 +1,25 @@
-# Explore LLMs geographic bias for European Countries
+# Geo-MISSED: Explore LLMs geographic bias for European Countries
 
-The aim of this work is to map geographic bias normalized by geo indicator.
+The aim of this repository is to map geographic bias normalized by geo indicator.
 
-**LLMs' prediction of average income per inhabitant:**
+Geo-MISSED aims to detect 2 LLMs behaviors when dealing with geographic information retrieval:
 
-The aim is to predict the annual income for each subregion of European countries (at the NUTS_2 level). The ground truth is based on Eurostat data.
+- Conservatism: Low error rate and, despite a low confidence
+score, very little variation between responses to the same
+prompt. This behavior is often observed in high-income
+countries.
+- Miscalibration: High error rate with high confidence scores
+but too much variation between responses to the same prompt.
+This is observed in low-income countries.
 
-The pipeline is divided into 3 steps:
+The pipeline is divided into 4 steps:
 
 1. Preprocessing and extracting Eurostat data.
 2. Running LLMs to predict the average income per inhabitant.
 3. Displaying on maps the difference (**MAPE**) between the predicted income and Eurostat data.
+4. Providing statistical indicators between models and geographic areas
 
-See the maps: https://remydecoupes.github.io/normalized_geobias_llm/
+See the maps: https://remydecoupes.github.io/Geo-MISSED/
 
 
 ## Data
