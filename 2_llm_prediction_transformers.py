@@ -29,19 +29,19 @@ tqdm.pandas()
 
 data_dir = "./output"
 eurostat_data_files = [
-    {
-        "indicator": "income",
-        "path": f"{data_dir}/eurostat_income_2017.csv",
-        "complete_year": "2017",
-        "unit": "EUR_HAB"
-    },
-    {
-        "indicator": "pop_density",
-        "path": f"{data_dir}/eurostat_pop_density_2018.csv",
-        "complete_year": "2018",
-        "unit": "PER_KM2",
-        "nan": ":", # null value are ":" and not empty cell
-    },
+    # {
+    #     "indicator": "income",
+    #     "path": f"{data_dir}/eurostat_income_2017.csv",
+    #     "complete_year": "2017",
+    #     "unit": "EUR_HAB"
+    # },
+    # {
+    #     "indicator": "pop_density",
+    #     "path": f"{data_dir}/eurostat_pop_density_2018.csv",
+    #     "complete_year": "2018",
+    #     "unit": "PER_KM2",
+    #     "nan": ":", # null value are ":" and not empty cell
+    # },
     {
         "indicator": "poverty",
         "path": f"{data_dir}/eurostat_poverty_2022.csv",
@@ -49,12 +49,12 @@ eurostat_data_files = [
         "unit": "PC",
         "nan": ":"
     },
-    {
-        "indicator": "age_index",
-        "path": f"{data_dir}/eurostat_age_index_2021.csv",
-        "complete_year": "2021",
-        "unit": "NR"
-    }
+    # {
+    #     "indicator": "age_index",
+    #     "path": f"{data_dir}/eurostat_age_index_2021.csv",
+    #     "complete_year": "2021",
+    #     "unit": "NR"
+    # }
 ]
 
 def prediction(NUTS_ID, country, indicator, year):
@@ -419,22 +419,27 @@ if __name__ == "__main__":
 
         # Absolute
         file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
-        if file_path.exists():
-            print("\t Absolute: already processed")
-        else:
-            df[[f"{indicator}_absolute_predicted", f"{indicator}_absolute_deviation", f"{indicator}_absolute_logprobs", f"{indicator}_absolute_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
-            try :
-                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
-            except:
-                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
+        # if file_path.exists():
+        #     print("\t Absolute: already processed")
+        # else:
+        #     df[[f"{indicator}_absolute_predicted", f"{indicator}_absolute_deviation", f"{indicator}_absolute_logprobs", f"{indicator}_absolute_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
+        #     try :
+        #         df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
+        #     except:
+        #         df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
+        df[[f"{indicator}_absolute_predicted", f"{indicator}_absolute_deviation", f"{indicator}_absolute_logprobs", f"{indicator}_absolute_logprobs_deviation"]] = df.progress_apply(lambda row: average_prediction(row, indicator, year), axis=1).apply(pd.Series)
+        try :
+            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_absolute.csv')
+        except:
+            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
 
         # Relative
-        file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
-        if file_path.exists():
-            print("\t Relative: already processed")
-        else:
-            df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
-            try :
-                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
-            except:
-                df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
+        # file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+        # if file_path.exists():
+        #     print("\t Relative: already processed")
+        # else:
+        #     df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
+        #     try :
+        #         df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+        #     except:
+        #         df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
