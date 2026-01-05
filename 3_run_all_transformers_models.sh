@@ -17,7 +17,7 @@ qwen_models=(
   "Qwen2.5-7B-Instruct"
   "Qwen2.5-14B-Instruct"
   "Qwen2.5-32B-Instruct"
-#  "Qwen2.5-72B-Instruct"
+  "Qwen2.5-72B-Instruct"
 )
 
 # Add prefixes
