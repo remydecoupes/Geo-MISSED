@@ -73,7 +73,8 @@ chmod u+X 3_run_all_transformers_models.sh
 | ![](figs/barplot_error_with_deviation.png)             | ![](figs/scatter_plot_global_picture.png)         | ![](figs/bivariate_llama-70B_poverty.png)      |
 
 
-## Statistical significance test
+## Statistical significance tests
+**Example for the error metric**
 
 ### Anova
 ```{bash}
@@ -81,7 +82,7 @@ ANOVA (error rate): F = 10.332, p = 0.0004
 ```
 
 ### Tukey test 
-Example for the error metric
+
 ```{bash}
 Multiple Comparison of Means - Tukey HSD, FWER=0.05 
 ====================================================
