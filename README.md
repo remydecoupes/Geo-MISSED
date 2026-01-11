@@ -73,6 +73,20 @@ chmod u+X 3_run_all_transformers_models.sh
 | ![](figs/barplot_error_with_deviation.png)             | ![](figs/scatter_plot_global_picture.png)         | ![](figs/bivariate_llama-70B_poverty.png)      |
 
 
+## Anova test
+
+Example for the error metric
+```{bash}
+Multiple Comparison of Means - Tukey HSD, FWER=0.05 
+====================================================
+group1 group2 meandiff p-adj   lower   upper  reject
+----------------------------------------------------
+  high    low   0.1458 0.0136   0.027  0.2647   True
+  high medium  -0.0688 0.3403 -0.1877  0.0501  False
+   low medium  -0.2146 0.0003 -0.3335 -0.0958   True
+----------------------------------------------------
+```
+
 -------
 <img align="left" src="https://www.umr-tetis.fr/images/logo-header-tetis.png">
 
