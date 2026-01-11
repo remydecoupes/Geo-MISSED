@@ -93,7 +93,7 @@ def prediction(NUTS_ID, country, indicator, year):
             {"role": "system",
              "content": (
                  f"You are a statistician working for the European commission at EUROSTAT. "
-                 f"You have to give the percent à poop people by NUTS 1 or 2 or 3 level for year {year}. "
+                 f"You have to give the percent of poor people by NUTS 1 or 2 or 3 level for year {year}. "
                  f"Don't compute it, just guess the ratio. Answer only with the ratio (a single number) "
                  f"without any other words or repetition of the question. Don't repeat the prompt neither. "
                  f"Example of answer: '25.3'."
@@ -434,7 +434,7 @@ if __name__ == "__main__":
             df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
 
         # Relative
-        # file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+        file_path = Path(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
         # if file_path.exists():
         #     print("\t Relative: already processed")
         # else:
@@ -443,3 +443,9 @@ if __name__ == "__main__":
         #         df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
         #     except:
         #         df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
+        
+        df[[f"{indicator}_relative_predicted", f"{indicator}_relative_deviation", f"{indicator}_relative_logprobs", f"{indicator}_relative_logprobs_deviation"]] = df.progress_apply(lambda row: average_relative_prediction(row, indicator, year), axis=1).apply(pd.Series)
+        try :
+            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_{model_short_name}_relative.csv')
+        except:
+            df.to_csv(f'./output/bash/{indicator}_{year}_nuts_llm_error_on_name.csv')
