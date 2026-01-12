@@ -20,7 +20,7 @@ qwen_models=(
   "Qwen2.5-72B-Instruct"
 )
 
-# Add prefixes
+Add prefixes
 for model in "${mistral_models[@]}"; do
   full_model="mistralai/$model"
   echo "Running for model: $full_model"
